@@ -419,7 +419,8 @@
       "summarySeparator": "、",
       "filterEmptyCopy": "可在顯示設定的「篩選」中調整或重設。",
       "filterTeammatesHeading": "夥伴",
-      "filterAnySource": "不限來源",
+      "filterAnySource": "全部",
+      "filterHideAllTeammates": "都不顯示",
       "filterSelectedTeammates": "已選 {{count}} 位"
     },
     "search": {
@@ -872,6 +873,10 @@
     "checkPrompt": "幫我查查已連接的信箱、訊息等來源裡，有沒有需要我處理的新事項，有就記成待辦。",
     "dailyCheck": "每天幫我查一次",
     "dailyCheckMeta": "工作日 9:00，沒有新待辦不打擾",
+    "recentTasks": "近期任務",
+    "unread": "未讀結果",
+    "stopDailyCheck": "停止每天檢查",
+    "openFailed": "無法開啟連結",
     "dailyCheckFailed": "沒能儲存，請重試",
     "loadFailed": "無法讀取待辦",
     "outputs": "輸出內容",

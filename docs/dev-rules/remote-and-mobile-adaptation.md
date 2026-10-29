@@ -254,6 +254,22 @@ relay 以 close 1013 `inbound backpressure` 主动断连，此时任何「立即
 **托管 Codex 启动的跨机往返与执行环境恢复**(2026-10-22 远程供应商调查：启动 277 次串行文件操作、每次跨机
 0.5–3s，启动几分钟、撞 5 分钟上限；握手失败后「能聊天但没有 Shell 与文件工具」)：
 
+- **POSIX Agent → Windows 执行端的沙箱实现**（2026-10-28 真机）：固定 Codex 0.159.2
+  从 macOS 发出受限权限时携带 `windowsSandboxLevel=disabled`，Windows 原生 exec-server
+  因无法落实沙箱意图拒绝所有命令。控制端只把这种跨平台、`permissions.type=managed` 的
+  disabled 选择映射为 Windows 原生 `restricted-token`；权限条目、网络设置、Cindy 本机授权
+  闸门均保持原值，显式 Windows 选择和非受限请求不改。原生实现不能落实 deny-read 等规则时
+  仍拒绝整个请求，不删规则、不转无沙箱、不重放命令，不安装 MXC、创建系统账号或改防火墙。
+  这是 Windows 原生受限令牌的边界，不声称其网络隔离等同 macOS：网络约束沿用该原生实现。
+  故障只影响这个任务的执行请求，不重启 device-link、不撤下其它 peer。回归见
+  `remote-agent/__tests__/execServerProjection.e2e.test.ts` 的真实原生进程及
+  `executor/__tests__/virtualWorkspace.test.ts`；临时文件和权限验证均限制在测试目录。
+  Windows 的 Store/MSIX PowerShell 无法在受限令牌下启动（真机 `CreateProcessAsUserW`
+  错误 `-1073283067`）。同一跨平台适配只在原生声明此类 Shell 时，优先宣告现存的
+  非 Store PowerShell 7，否则使用现存的系统 Windows PowerShell；先解析真实路径排除
+  指回 Store 的别名。没有替代时保留原声明并明确失败，不改系统 PATH、不下载或安装 Shell，
+  不改用户显式命令及其它 Agent 的 Shell。原生回归必须按 initialize 宣告的 Shell 真正执行。
+
 - **不可能存在的路径在 Agent 所在电脑直接回答**(`host/execServerShortcut.ts`)：Codex 沿工作目录逐级向上找
   `.git`、Skill 目录与插件清单。镜像根内的虚拟垫层(真实根目录以上的 `workspace/p/…`)及镜像根本身在任务电脑没有
   对应目录(已映射的工作区及真实上级、`home`、`tmp`、`additional` 除外，见 `controller/startRemote.ts` 的
@@ -717,6 +733,37 @@ Git 元数据查询可以成批并发，不能仅按总查询数推断耗时；�
 写成线上已修复。现场查询格式、方法和消息长度符合短路入口，最终运行端版本及接线路径仍待核验。
 本次补齐命中统计与可重复对照；测试还修正了 mock 调用方式，并阻止测试引擎后台同步原生插件目录，
 避免 Windows 遗留 Git 子进程影响收尾。
+
+2026-10-29 补充：已有短路仍会留下插件清单的串行检查。`host/execServerStartupBatch.ts`
+在启动阶段第一次遇到未短路的插件清单 `fs/getMetadata` 时，沿该目录向上最多 64 层，
+为三种清单提前发送普通原生查询（最多 192 条，已知不存在的虚拟路径仍由旧短路排除）。
+复用既有 poll/push 批次、路径投影和原生 sandbox，不添加协议字段、方法或能力。
+只有原生 `-32004` 才能回答同连接、同参数／sandbox 的后续元数据查询；已有文件、权限错误、
+未知路径及超出预算的路径继续按原查询处理。不缓存文件内容或成功元数据。
+启动结束、出现写操作／启动进程时停止复用并释放等待中的原查询；连接关闭时清理。
+内部查询 ID 与原生 ID 隔离，迟到的内部回复不能送给 Codex。每条连接只提前查询一次。
+请求的 16 KiB 优化预算不用于回复解析，否则较大错误回复会漏消费内部 ID，并使原查询继续等待。
+对端关闭及超限分片主动关连接时显式清理批处理状态，不能依赖不会触发的 `wsClose` 回调。
+
+同日 Windows 隔离基准：真实 Codex 0.159.2、原生 exec-server、生产 Controller/Host，
+同一项目 8 个合成 Skill（`.agents` 与 `.claude` 各一份），每次 poll/push 返回增加 400ms。
+两侧实际均为 Windows，仅移除原始绝对路径缺失快照，模拟跨系统时不能复用该快照的分支；
+不读取真实项目 Skill 或分享者数据，不请求线上模型。仅开关新增批量实现，按关／开／关／开运行：
+
+| 样本 | 批量关闭 | 批量开启 | 回传批次（关闭 → 开启） |
+| --- | ---: | ---: | ---: |
+| 1 | 24,282ms | 7,469ms | 56 → 15 |
+| 2 | 24,214ms | 7,434ms | 56 → 15 |
+| 均值 | 24,248ms | 7,451.5ms | 56 → 15 |
+
+启动耗时下降 **69.3%**。真实转发查询仍为 78 条，优化的是串行往返；全部提前查询的实际
+处理和回传成本已计入（此前直接复用已知缺失结果的 6.2s 只是因果实验，不是实现后的数字）。
+启动本地回答 100 → 142；`forwarded` 包括提前查询，`answered` 包括复用结果，两者相加不再
+代表原生 Agent 发起的原始请求总数。完整基准命令：
+`pnpm --dir apps/desktop exec vitest run src/main/remote-agent/__tests__/startupProbe.e2e.test.ts -t 'batches eight-Skill' --maxWorkers=1`。
+实测测试体 67.02s、含模块加载 107.45s；默认 unit 不运行此手动 e2e。
+这证明受控慢链路的因果收益，不承诺现场 95s 变成 7.5s；真实 Windows/macOS 跨设备及原分享供应商仍未验收。
+优化需实际运行 Agent 的电脑更新，任务所在电脑和中转可保持旧版。
 
 复跑：`pnpm --dir apps/desktop exec vitest run src/main/remote-agent/__tests__/startupProbe.e2e.test.ts --maxWorkers=1`。
 该文件登记在手动 e2e tier，真实进程与延迟不进入默认 unit。单文件两组对照实测 56.11s（含加载）；

@@ -419,7 +419,8 @@
       "summarySeparator": ", ",
       "filterEmptyCopy": "Adjust or reset Filters in Display settings.",
       "filterTeammatesHeading": "Teammates",
-      "filterAnySource": "Any source",
+      "filterAnySource": "All",
+      "filterHideAllTeammates": "Hide all",
       "filterSelectedTeammates": "{{count}} selected"
     },
     "search": {
@@ -872,6 +873,10 @@
     "checkPrompt": "Check my connected sources, like mail and messages, for anything new I need to handle, and add it to my todos.",
     "dailyCheck": "Check every day",
     "dailyCheckMeta": "Weekdays at 9:00, quiet when nothing is new",
+    "recentTasks": "Recent tasks",
+    "unread": "Unread result",
+    "stopDailyCheck": "Stop daily checking",
+    "openFailed": "Couldn’t open this link",
     "dailyCheckFailed": "Couldn't save. Try again.",
     "loadFailed": "Couldn't load todos",
     "outputs": "Outputs",

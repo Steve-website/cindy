@@ -4,6 +4,7 @@ export default {
   real: 'RegionScreenshotOverlay, ScrollCaptureOverlay, LiveCapturePanel, ScrollCapture, CaptureRecorder, real Chromium canvas/MediaRecorder and GIF encoding',
   notCovered: 'Native screen acquisition, global keyboard sampling, macOS permissions and native save dialogs; frame source is synthetic.',
   cases: {
+    snapping: { about: 'Correct a transparent window guess, hover adjacent elements, cycle hierarchy and click to select' },
     default: { about: 'Scroll overlapping text, finish, export the actual stitched pixels' },
     idle: { about: 'Repainting before the first scroll keeps the gesture hint, then scrolling still exports a long image' },
     'preview-motion': { about: 'Prepending reveals new rows without jumping existing content; growth and scrolling share one animation' },
@@ -14,6 +15,21 @@ export default {
   },
   async ready(page) { await page.locator('canvas').first().waitFor(); },
   async check(page, ui) {
+    if (ui.case === 'snapping') {
+      await page.getByText('180 × 140', { exact: true }).waitFor();
+      await ui.capture('first-element');
+      await page.mouse.move(400, 180);
+      await page.getByText('200 × 140', { exact: true }).waitFor();
+      await ui.capture('adjacent-element');
+      await page.mouse.wheel(0, -120);
+      await page.getByText('480 × 360', { exact: true }).waitFor();
+      await ui.capture('corrected-window');
+      await page.mouse.click(400, 180);
+      await page.mouse.move(650, 550);
+      assert.equal(await page.getByText('480 × 360', { exact: true }).count(), 1, 'click keeps the resolved window selected');
+      await ui.capture('selected');
+      return;
+    }
     if (ui.case === 'preview-motion') await page.emulateMedia({ reducedMotion: 'no-preference' });
     const isScroll = ['default', 'idle', 'preview-motion'].includes(ui.case);
     const button = async (key) => page.getByRole('button', { name: await ui.t(key), exact: true });
@@ -249,13 +265,19 @@ export default {
       await (await button('remoteDesktop.actualSize')).click();
       // The idle case produces a short image. Give it a smaller editing window
       // so a wheel gesture has real overflow to scroll, just as with a long capture.
-      if (ui.case === 'idle') await page.setViewportSize({ width: 900, height: 400 });
-      const review = page.locator('[tabindex="0"]');
-      assert.ok(await review.evaluate(el => el.scrollHeight > el.clientHeight), 'the editor has overflow to review');
-      await review.evaluate(el => { el.scrollTop = 0; });
-      await review.hover(); await page.mouse.wheel(0, 300);
-      await page.waitForFunction(() => document.querySelector('[tabindex="0"]').scrollTop > 0);
-      assert.deepEqual(await page.locator('canvas').first().evaluate(el => [el.width, el.height]), dimensions, 'zoom and scrolling do not resample the source');
+      try {
+        if (ui.case === 'idle') await page.setViewportSize({ width: 900, height: 400 });
+        const review = page.locator('[tabindex="0"]');
+        assert.ok(await review.evaluate(el => el.scrollHeight > el.clientHeight), 'the editor has overflow to review');
+        await review.evaluate(el => { el.scrollTop = 0; });
+        await review.hover(); await page.mouse.wheel(0, 300);
+        await page.waitForFunction(() => document.querySelector('[tabindex="0"]').scrollTop > 0);
+        assert.deepEqual(await page.locator('canvas').first().evaluate(el => [el.width, el.height]), dimensions, 'zoom and scrolling do not resample the source');
+      } finally {
+        // Electron reuses this page across variants. A CDP viewport override
+        // survives native setContentSize, poisoning every case after idle.
+        if (ui.case === 'idle') await page.setViewportSize({ width: 900, height: 700 });
+      }
       // The shortcut hint follows the host platform: "(Ctrl+S)" on Windows, "(⌘S)" on macOS.
       const save = (await ui.t('regionScreenshot.save')).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       await page.getByRole('button', { name: new RegExp(`^${save} \\((Ctrl\\+|⌘)S\\)$`) }).click();

@@ -80,6 +80,7 @@ import {
 import { CHAT_HEADER_MARK_SIZE, CHAT_HEADER_BLUR_FADE_INSIDE, ChatIdentityHeader } from './ChatIdentityHeader';
 import { SessionHeaderNativeBlur } from './SessionHeaderNativeControls';
 import { CompanionEntering, CompanionFadeIn } from './CompanionEntering';
+import { BotGroupRuntimeFailureNotice } from './BotGroupRuntimeFailureNotice';
 import { BotGroupComposer, type BotGroupSendInput } from './BotGroupComposer';
 import { BotGroupMessageAttachments } from './BotGroupMessageAttachments';
 import { MessageListVisibilityContext, useScrollViewMessageVisibility } from './messageListVisibility';
@@ -352,7 +353,7 @@ export function BotGroupChatScreen({ deviceId, deviceName, groupId, messageId, n
         clientId: input.clientId,
         ...(quote ? { quote: { messageId: quote.messageId } } : {}),
         ...(input.division ? { division: true } : {}),
-        // Only a computer that declared `supportsAttachments` is offered any (see the composer).
+        // The active server/computer path declares attachment support (see the composer).
         ...(input.attachments.length > 0 ? { attachments: input.attachments } : {}),
       });
       if (quote) setReplyTo(current => current?.messageId === quote.messageId ? null : current);
@@ -496,7 +497,7 @@ export function BotGroupChatScreen({ deviceId, deviceName, groupId, messageId, n
       <BotGroupComposer members={group.members} identityFor={identityFor} deviceId={deviceId} online={(chat.online || !!chat.canQueue) && !group.archived && !group.dissolvedAt}
         quoteMessageId={replyTo?.messageId} focusRequest={replyFocusRequest}
         running={group.round.status === 'running'} planState={botGroupComposerPlanState(openBotGroupPlan(group), group.replyMode)}
-        divisionSupported={!chat.server && (!group.singleSpeaker || group.supportsDivision === true)} attachmentsSupported={group.supportsAttachments === true} onSend={send} onStop={stop} />
+        divisionSupported={!chat.server && (!group.singleSpeaker || group.supportsDivision === true)} attachmentsSupported={group.supportsAttachments === true} uploadAttachment={chat.uploadAttachment} onSend={send} onStop={stop} />
     </KeyboardAvoidingView>;
   }
 
@@ -671,9 +672,7 @@ function BotGroupTimelineItem({
   if (message.kind === 'notice' || message.authorKind === 'system') {
     const name = message.authorName.trim() || member?.name || '';
     if (isBotGroupRuntimeFailureCode(message.runtimeFailureCode)) {
-      return <Text style={styles.runtimeFailureNotice} testID="botGroup.notice">{
-        `${t(`groupChat.notice.runtimeFailure.${message.runtimeFailureCode}`, { name })}\n${t('groupChat.notice.runtimeFailureSetupHint')}`
-      }</Text>;
+      return <BotGroupRuntimeFailureNotice key={message.id} code={message.runtimeFailureCode} name={name} />;
     }
     const variant = botGroupNoticeVariant(message.noticeCode, message.planId !== null);
     return <Text style={styles.notice} testID="botGroup.notice">{variant ? t(`groupChat.notice.${variant}`, { name }) : message.content}</Text>;
@@ -762,8 +761,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   olderNote: { color: colors.textTertiary, fontSize: typeScale.footnote, lineHeight: lineHeight.caption, textAlign: 'center' },
   time: { color: colors.textTertiary, fontSize: typeScale.caption, lineHeight: lineHeight.caption, textAlign: 'center' },
   notice: { color: colors.textTertiary, fontSize: typeScale.footnote, lineHeight: lineHeight.caption, textAlign: 'center' },
-  runtimeFailureNotice: { color: colors.textSecondary, fontSize: typeScale.footnote, lineHeight: lineHeight.caption,
-    fontWeight: fontWeight.regular, textAlign: 'center' },
   dividerText: { flexShrink: 1, color: colors.textTertiary, fontSize: typeScale.footnote, lineHeight: lineHeight.caption, textAlign: 'center' },
   userRow: { flexDirection: 'row', justifyContent: 'flex-end' },
   // Full width so the bubble keeps its 86% cap and attachments their own size limits.
