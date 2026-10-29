@@ -2359,7 +2359,7 @@
       "avatarAlt": "{{name}} 的頭像",
       "local": {
         "exitFailed": "退出未登入狀態失敗，請重試",
-        "name": "未登入",
+        "name": "本機",
         "description": "資料僅儲存在本機，不使用 Cindy 帳號服務",
         "signIn": "登入 Cindy",
         "exit": "退出未登入狀態"

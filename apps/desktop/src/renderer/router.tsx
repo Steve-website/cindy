@@ -8,6 +8,7 @@ import { SidebarWindowLayout } from '@/components/layout/SidebarWindowLayout';
 import { SettingsView } from '@/components/settings/SettingsView';
 import { LoginPage } from '@/components/login/LoginPage';
 import { AddAccountLoginPage } from '@/components/login/AddAccountLoginPage';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { GuestRoute } from '@/components/auth/GuestRoute';
 import { LocalDbGate } from '@/components/auth/LocalDbGate';
@@ -70,7 +71,7 @@ export const router = createHashRouter([
     children: [
       {
         path: 'add-account',
-        element: <AddAccountLoginPage />,
+        element: LOCAL_ONLY_BUILD ? <Navigate to="/" replace /> : <AddAccountLoginPage />,
       },
       {
         // 主功能区入口 —— 经过 LocalDbGate（localDb 就绪）才能进

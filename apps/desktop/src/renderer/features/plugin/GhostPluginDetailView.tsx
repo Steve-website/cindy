@@ -51,6 +51,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import {
   ghostDeclaresHiddenTasks,
   ghostTrustLabelKey,
@@ -287,7 +288,7 @@ export function GhostPluginDetailView({
                   )}
                 </Button>
               ) : null}
-              {!publicationBlocked && onContribute ? (
+              {!publicationBlocked && onContribute && !LOCAL_ONLY_BUILD ? (
                 <Button
                   variant="secondary"
                   size="lg"

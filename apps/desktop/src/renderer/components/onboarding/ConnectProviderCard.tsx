@@ -23,6 +23,7 @@ import { presetDisplayName } from '@cindy/model-providers';
 
 import { localCliDisplayName } from '../../../shared/localCliDetect';
 import { cn } from '@/lib/utils';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { hasProviderLogo, ProviderLogoMark } from '@/components/icons/ProviderLogoMark';
 import { providerMonogram } from '@/lib/providerModels';
 import { useProviderOnboarding } from '@/hooks/useProviderOnboarding';
@@ -108,22 +109,25 @@ export function ConnectProviderCard({ className, dismissible = true }: {
             />
           );
         })}
-        {/* 推荐行:Cindy AI(cloud)/ 登录 Cindy(signed-out・local) */}
-        <ProviderRow
-          icon={rowIcon('xd', xdProvider?.name ?? 'Cindy AI')}
-          label={
-            cloudMode
-              ? (xdProvider?.name ?? t('onboarding.connectProvider.cindy.title'))
-              : t('onboarding.connectProvider.cindy.loginTitle')
-          }
-          sub={
-            cloudMode
-              ? t('onboarding.connectProvider.cindy.desc')
-              : t('onboarding.connectProvider.cindy.loginDesc')
-          }
-          badge={t('onboarding.connectProvider.recommendedLabel')}
-          onClick={() => (cloudMode ? goConnect('xd') : void signInToCindy())}
-        />
+        {/* 推荐行:Cindy AI(cloud)/ 登录 Cindy(signed-out・local)。
+            Local-only build 下去掉登录行,只留本机 CLI 检测与自备 API key。 */}
+        {!LOCAL_ONLY_BUILD || cloudMode ? (
+          <ProviderRow
+            icon={rowIcon('xd', xdProvider?.name ?? 'Cindy AI')}
+            label={
+              cloudMode
+                ? (xdProvider?.name ?? t('onboarding.connectProvider.cindy.title'))
+                : t('onboarding.connectProvider.cindy.loginTitle')
+            }
+            sub={
+              cloudMode
+                ? t('onboarding.connectProvider.cindy.desc')
+                : t('onboarding.connectProvider.cindy.loginDesc')
+            }
+            badge={t('onboarding.connectProvider.recommendedLabel')}
+            onClick={() => (cloudMode ? goConnect('xd') : void signInToCindy())}
+          />
+        ) : null}
         {primaryRows.map(renderRow)}
 
         {moreRows.length > 0 && (

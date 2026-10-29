@@ -12,6 +12,9 @@ import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// These cases describe the cloud-capable build; the fork ships LOCAL_ONLY_BUILD=true.
+vi.mock('@/lib/localOnlyBuild', () => ({ LOCAL_ONLY_BUILD: false }));
+
 import type { ProviderView } from '@cindy/model-providers';
 
 const { providersState, authState, exitLocalModeMock } = vi.hoisted(() => ({

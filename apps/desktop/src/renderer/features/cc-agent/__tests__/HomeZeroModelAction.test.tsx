@@ -5,6 +5,9 @@ import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+// These cases describe the cloud-capable build; the fork ships LOCAL_ONLY_BUILD=true.
+vi.mock('@/lib/localOnlyBuild', () => ({ LOCAL_ONLY_BUILD: false }));
+
 const signInMock = vi.fn();
 
 vi.mock('react-i18next', () => ({

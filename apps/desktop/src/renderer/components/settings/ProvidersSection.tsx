@@ -58,6 +58,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tip } from '@/components/ui/tooltip';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog-provider';
 import { useSignInToCindy } from '@/hooks/useSignInToCindy';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { useProviderOAuthDeviceCode } from '@/hooks/useProviderOAuthDeviceCode';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/lib/toast';
@@ -2874,7 +2875,8 @@ export function ProvidersSection() {
 
   // Cindy AI 登录引导:无账号会话目录不含 xd(见 CindySigninRow 头注释),置顶
   // 引导行;列表为空时默认选中它(右栏直接展示登录引导,不留「点击添加」空态)。
-  const showCindySignin = !byId.has('xd');
+  // Local-only build: 伪行与登录引导都不出现,空态直接走「添加供应商」。
+  const showCindySignin = !byId.has('xd') && !LOCAL_ONLY_BUILD;
   const cindySigninActive =
     showCindySignin &&
     (selectedId === CINDY_SIGNIN_ID || (selectedId == null && listProviders.length === 0));

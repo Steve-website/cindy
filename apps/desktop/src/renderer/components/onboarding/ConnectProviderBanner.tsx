@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import type { CSSProperties } from 'react';
 
 import { cn } from '@/lib/utils';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { useProviderOnboarding } from '@/hooks/useProviderOnboarding';
 import { useSignInToCindy } from '@/hooks/useSignInToCindy';
 
@@ -30,6 +31,10 @@ export function ConnectProviderBanner({
   const onboarding = useProviderOnboarding({ remote });
 
   if (!onboarding.visible) return null;
+
+  // Local-only build: the banner's only CTA would be "Sign in to Cindy".
+  // The full onboarding card (if shown) already covers provider setup.
+  if (LOCAL_ONLY_BUILD) return null;
 
   const cloudMode = onboarding.authMode === 'cloud';
 

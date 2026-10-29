@@ -72,6 +72,7 @@ import { ghostInstallErrorKey } from '@/cindy-brain/installErrorKey';
 import { installGhostFromFile, pickAndUpdateGhost } from '@/cindy-brain/installFlow';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { cn, basename } from '@/lib/utils';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { AttentionDot } from '@/components/sidebar/AttentionDot';
 import {
   useGhostUnread,
@@ -1990,14 +1991,16 @@ function LocalGhostPluginPage({
       onSelectTab={onSelectCatalogTab}
       headerActions={
         <>
-          <Button variant="secondary" size="sm" onClick={() => openMyPlugins()}>
-            {t('settings.ghosts.contribution.myPlugins')}
-            {reviewUnread.length > 0 ? (
-              <span role="img" className="inline-flex" aria-label={t('settings.ghosts.contribution.unreadReview')}>
-                <AttentionDot tone={reviewUnread.some(item => item.status === 'rejected') ? 'error' : 'done'} />
-              </span>
-            ) : null}
-          </Button>
+          {LOCAL_ONLY_BUILD ? null : (
+            <Button variant="secondary" size="sm" onClick={() => openMyPlugins()}>
+              {t('settings.ghosts.contribution.myPlugins')}
+              {reviewUnread.length > 0 ? (
+                <span role="img" className="inline-flex" aria-label={t('settings.ghosts.contribution.unreadReview')}>
+                  <AttentionDot tone={reviewUnread.some(item => item.status === 'rejected') ? 'error' : 'done'} />
+                </span>
+              ) : null}
+            </Button>
+          )}
           <GhostPluginActions
             onInstall={() => void handleInstall()}
             onCreateWithCindy={handleCreateWithCindy}

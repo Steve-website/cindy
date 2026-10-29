@@ -15,12 +15,16 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 
 export function useSignInToCindy(returnTo?: string): () => Promise<void> {
   const { mode, exitLocalMode } = useAuth();
   const navigate = useNavigate();
 
   return useCallback(async () => {
+    // Local-only build: there is no Cindy account to sign in to. Callers should
+    // already hide their CTA; this is the last line of defence.
+    if (LOCAL_ONLY_BUILD) return;
     if (mode === 'local') {
       try {
         await exitLocalMode();

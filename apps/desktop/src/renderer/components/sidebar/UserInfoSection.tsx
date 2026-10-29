@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOptionalConfirmDialog } from '@/components/ui/confirm-dialog-provider';
 import { useUpdateStatus } from '@/hooks/useUpdateStatus';
@@ -308,7 +309,7 @@ export function UserInfoSection({ isCollapsed, onOpenUpdateNotice }: UserInfoSec
         savedAccounts.some((account) => !account.isCurrent) ? (
           <DropdownMenuSeparator />
         ) : null}
-        {mode === 'local' ? (
+        {mode === 'local' && !LOCAL_ONLY_BUILD ? (
           <DropdownMenuItem
             disabled={addingAccount}
             onSelect={() => void openAddAccount()}

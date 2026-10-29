@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
+import { LOCAL_ONLY_BUILD } from '@/lib/localOnlyBuild';
 import { useSignInToCindy } from '@/hooks/useSignInToCindy';
 
 /** 首页零模型单行动卡:未登录走 states.html B,已登录无来源走开通官方服务。 */
@@ -18,6 +19,10 @@ export function HomeZeroModelAction({
   const navigate = useNavigate();
   const signInToCindy = useSignInToCindy();
   const cloud = authMode === 'cloud';
+
+  // Local-only build: no account exists, so the "sign in to continue" card is
+  // meaningless. Provider setup lives in Settings → Providers.
+  if (LOCAL_ONLY_BUILD) return null;
 
   return (
     <div data-testid="home-zero-model" className="mt-4 w-full">
