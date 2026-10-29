@@ -492,11 +492,13 @@ export async function listErrorTailPendingSessionIds(): Promise<string[]> {
 
 // SQL counterpart of isEmptyModelChangeMarker: exclude only a known divider,
 // before COUNT/LIMIT. Invalid metadata and nonempty assistant output remain progress.
-const notEmptyModelChangeMarker = sql`CASE
-  WHEN ${messages.role} = 'assistant' AND ${messages.content} IN ('', '""')
-    AND json_valid(${messages.agentMeta})
-  THEN CASE WHEN json_type(${messages.agentMeta}, '$.modelChange') = 'object' THEN 0 ELSE 1 END
-  ELSE 1 END`;
+function notEmptyModelChangeMarker() {
+  return sql`CASE
+    WHEN ${messages.role} = 'assistant' AND ${messages.content} IN ('', '""')
+      AND json_valid(${messages.agentMeta})
+    THEN CASE WHEN json_type(${messages.agentMeta}, '$.modelChange') = 'object' THEN 0 ELSE 1 END
+    ELSE 1 END`;
+}
 
 /**
  * 错误重试续跑判定(agent-input-coordinator 的 hasAssistantProgressAfter dep):
@@ -524,7 +526,7 @@ export async function hasAssistantProgressAfterMessage(
       and(
         eq(messages.sessionId, sessionId),
         inArray(messages.role, ['assistant', 'tool_use', 'thinking', 'ask_user', 'plan_review']),
-        notEmptyModelChangeMarker,
+        notEmptyModelChangeMarker(),
         isNull(messages.rewindAt),
         sql`EXISTS (
           SELECT 1 FROM messages u
@@ -571,7 +573,7 @@ export async function getRecoveryContextSnapshot(
   const visibleProgress = and(
     eq(messages.sessionId, sessionId),
     inArray(messages.role, progressRoles),
-    notEmptyModelChangeMarker,
+    notEmptyModelChangeMarker(),
     isNull(messages.rewindAt),
     afterUser,
   );
