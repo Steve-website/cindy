@@ -1862,7 +1862,7 @@ const config: ForgeConfig = {
     // 与主 exe 的「说明」字段必须同值,否则 dev 包会安装前后显示两个名字。
     win32metadata: {
       CompanyName: 'XD',
-      ProductName: 'Cindy',
+      ProductName: 'Echo',
       FileDescription: BRAND_IDENTITY.displayName,
     },
     icon: 'resources/icon',
@@ -1873,7 +1873,7 @@ const config: ForgeConfig = {
     //          main/deepLink.ts registerDeepLinkProtocol()。
     protocols: [
       // 双 scheme 注册:cindy:// 主 + xdt-maker:// 永久兼容(存量分享链接不死)。
-      { name: 'Cindy Deep Link', schemes: [...allDeepLinkSchemes()] },
+      { name: 'Echo Deep Link', schemes: [...allDeepLinkSchemes()] },
     ],
     // macOS 文件夹右键 "打开方式 → Cindy" 入口:
     //   声明 app 能接受 public.folder, Finder 自动把 Cindy 出现在 "打开方式" 列表。
