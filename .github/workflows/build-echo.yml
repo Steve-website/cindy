@@ -1,0 +1,80 @@
+name: Build Echo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build NSIS installer
+        run: pnpm release:package
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: echo-windows
+          path: |
+            apps/desktop/out/make/**/*.exe
+          if-no-files-found: error
+
+  linux:
+    name: Ubuntu package
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: pnpm
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dpkg fakeroot rpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build deb
+        run: pnpm build
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: echo-linux
+          path: |
+            apps/desktop/out/make/**/*.deb
+          if-no-files-found: error

@@ -1,8 +1,8 @@
 {
   "name": "desktop",
-  "productName": "Cindy",
+  "productName": "Echo",
   "version": "0.0.0",
-  "description": "Cindy desktop client",
+  "description": "Echo desktop client",
   "main": ".vite/build/index.js",
   "private": true,
   "scripts": {

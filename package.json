@@ -1,7 +1,7 @@
 {
   "name": "cindy",
   "private": true,
-  "description": "Cindy open-source client monorepo — desktop, mobile, and shared packages",
+  "description": "Echo desktop client monorepo — desktop and shared packages",
   "license": "Apache-2.0",
   "author": {
     "name": "XD Inc.",
