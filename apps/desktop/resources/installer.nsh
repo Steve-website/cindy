@@ -1,11 +1,11 @@
-; 区域身份参数化:本文件不再硬编码 Cindy 字面量,
+; 区域身份参数化:本文件不再硬编码 Echo 字面量,
 ; 一律走 electron-builder 在 common.nsh 里注入的宏——
-;   ${APP_EXECUTABLE_FILENAME} = <productName>.exe(cn/global Cindy.exe / dev CindyDev.exe)
-;   ${PRODUCT_FILENAME}        = productName(cn/global Cindy / dev CindyDev)
+;   ${APP_EXECUTABLE_FILENAME} = <productName>.exe(cn/global Echo.exe / dev CindyDev.exe)
+;   ${PRODUCT_FILENAME}        = productName(cn/global Echo / dev CindyDev)
 ;   ${SHORTCUT_NAME}           = forge.config nsis.shortcutName(与 exe 基名同源)
 ; 2026-07-26 起 cn/global exe 名同值(显示名统一,双装文件层互抢已被 owner
 ; 接受);dev 仍独立名,dev 安装器绝不误伤同机并存的正式安装。注册表键名
-; Windows 大小写不敏感,shell 键 "Cindy" 与历史写入的 "cindy" 是同一个键,
+; Windows 大小写不敏感,shell 键 "Echo" 与历史写入的 "cindy" 是同一个键,
 ; 行为零变化。
 !include "${BUILD_RESOURCES_DIR}\winget-shortcuts.nsh"
 !include "${BUILD_RESOURCES_DIR}\installer-directory.nsh"
@@ -44,7 +44,7 @@
   ; 新版 .ico 内多尺寸顺序/数量变化后那个索引会落到另一张图。
   ; 让 NSIS 在后续步骤中重建 .lnk，新的 IconLocation 自然指向当前 exe 的索引 0。
   ; ⚠️ 只清理本产品(本区域身份)自己的快捷方式——同机可能并存老 XDMaker 安装
-  ; 或另一区域的 Cindy 安装,它们的 .lnk 指向别的 exe,不属于本安装器,绝不能删。
+  ; 或另一区域的 Echo 安装,它们的 .lnk 指向别的 exe,不属于本安装器,绝不能删。
   Delete "$DESKTOP\${SHORTCUT_NAME}.lnk"
   Delete "$SMPROGRAMS\${SHORTCUT_NAME}.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_FILENAME}\${SHORTCUT_NAME}.lnk"
@@ -66,7 +66,7 @@
   ; 用 HKCU 不用 HKLM:不需要管理员权限, 多用户机器上每个用户启动 app 时自注册。
   ; %V 在 Directory\shell / Directory\Background\shell 两种上下文里都解析为
   ; "用户右键所在的目录" 路径, argv 直传不做 URL 编解码 (deep link 走 cindy:// 另一套)。
-  ; 键名用 ${PRODUCT_FILENAME}(区域身份):cn/global 'Cindy' 与历史 'cindy'
+  ; 键名用 ${PRODUCT_FILENAME}(区域身份):cn/global 'Echo' 与历史 'cindy'
   ; 键大小写不敏感同键(2026-07-26 起两区同键,双装互写已被 owner 接受);
   ; dev 'CindyDev' 独立键;都与老 XDMaker 安装的 xdt-maker 键并存。
   WriteRegStr HKCU "Software\Classes\Directory\shell\${PRODUCT_FILENAME}" "" "通过 ${PRODUCT_FILENAME} 打开"
@@ -138,7 +138,7 @@
     Pop $R1
   ${EndIf}
   ${If} $R0 != 0
-    MessageBox MB_OK|MB_ICONSTOP "Could not stop the Cindy remote desktop service. Run the uninstaller as administrator and try again."
+    MessageBox MB_OK|MB_ICONSTOP "Could not stop the Echo remote desktop service. Run the uninstaller as administrator and try again."
     Abort
   ${EndIf}
   cindy_remote_service_done:
