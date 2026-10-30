@@ -1,22 +1,22 @@
-// =============================================================================
-// 共享工具库 — CI 构建/发布脚本通用逻辑
+﻿// =============================================================================
+// å…±äº«å·¥å…·åº“ â€” CI æž„å»º/å‘å¸ƒè„šæœ¬é€šç”¨é€»è¾‘
 //
-// 这里只放纯辅助函数：哈希、压缩、OSS、CDN manifest、drizzle 校验、版本号写入等。
-// 主流程逻辑由 build-* / publish-* 各自负责。
+// è¿™é‡Œåªæ”¾çº¯è¾…åŠ©å‡½æ•°ï¼šå“ˆå¸Œã€åŽ‹ç¼©ã€OSSã€CDN manifestã€drizzle æ ¡éªŒã€ç‰ˆæœ¬å·å†™å…¥ç­‰ã€‚
+// ä¸»æµç¨‹é€»è¾‘ç”± build-* / publish-* å„è‡ªè´Ÿè´£ã€‚
 // =============================================================================
 
 import { execSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-// createGunzip / pipeline 供下方 immutable-guard 下载复核用;sha256 / gzipFile / OSS 原语
-// 已抽到 scripts/shared/oss.mjs(下方 re-export),故不再本地 import crypto / createGzip。
+// createGunzip / pipeline ä¾›ä¸‹æ–¹ immutable-guard ä¸‹è½½å¤æ ¸ç”¨;sha256 / gzipFile / OSS åŽŸè¯­
+// å·²æŠ½åˆ° scripts/shared/oss.mjs(ä¸‹æ–¹ re-export),æ•…ä¸å†æœ¬åœ° import crypto / createGzipã€‚
 import { createGunzip } from 'node:zlib';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { resolveReleaseCdnBaseUrl } from '../../../../scripts/shared/release-env.mjs';
-// OSS/CDN 原语(sha256 / gzip / ali-oss client / upload)已抽到仓库根 scripts/shared/oss.mjs,
-// 供 desktop 与 mobile 共用;这里 re-export 保持既有 import 面(CDN_BASE / createOSSClient 等)不变。
+// OSS/CDN åŽŸè¯­(sha256 / gzip / ali-oss client / upload)å·²æŠ½åˆ°ä»“åº“æ ¹ scripts/shared/oss.mjs,
+// ä¾› desktop ä¸Ž mobile å…±ç”¨;è¿™é‡Œ re-export ä¿æŒæ—¢æœ‰ import é¢(CDN_BASE / createOSSClient ç­‰)ä¸å˜ã€‚
 import {
   CDN_BASE,
   OSS_BUCKET,
@@ -54,32 +54,32 @@ export const PROJECT_ROOT = path.resolve(DESKTOP_ROOT, '../..');
 export const RELEASE_DIR = path.join(DESKTOP_ROOT, 'release');
 
 /**
- * electron-forge 打包产物基名(2026-07-17 品牌翻转 xdt-maker → Cindy):
- *   - packaged 目录  out/<PACKAGED_APP_NAME>-<platform>-<arch>/
+ * electron-forge æ‰“åŒ…äº§ç‰©åŸºå(2026-07-17 å“ç‰Œç¿»è½¬ xdt-maker â†’ Cindy):
+ *   - packaged ç›®å½•  out/<PACKAGED_APP_NAME>-<platform>-<arch>/
  *   - Windows exe    <packaged>/<PACKAGED_APP_NAME>.exe
- *   - macOS .app     <packaged>/<PACKAGED_APP_NAME>.app(Mach-O 同名)
- *   - Linux 二进制   <packaged>/<PACKAGED_APP_NAME>
- * ⚠️ 值必须与 packages/maker-shared/src/brandIdentity.ts 的
- * BRAND_IDENTITY.executableName(= apps/desktop/package.json productName)一致
- * ——.mjs 无法 import TS 单点,只能镜像字面量;一致性由
- * scripts/__tests__/brand-identity-sync.test.mjs 断言兜底。
- * ⚠️ 只描述「本地构建产物路径」。OSS/CDN 渠道前缀与发布产物文件名
- * (xdt-maker-<version>-Setup.exe / .dmg / .zip 等)仍留在老值:新渠道 bucket
- * 未就绪,发布目标另议,不随本次翻转。
+ *   - macOS .app     <packaged>/<PACKAGED_APP_NAME>.app(Mach-O åŒå)
+ *   - Linux äºŒè¿›åˆ¶   <packaged>/<PACKAGED_APP_NAME>
+ * âš ï¸ å€¼å¿…é¡»ä¸Ž packages/maker-shared/src/brandIdentity.ts çš„
+ * BRAND_IDENTITY.executableName(= apps/desktop/package.json productName)ä¸€è‡´
+ * â€”â€”.mjs æ— æ³• import TS å•ç‚¹,åªèƒ½é•œåƒå­—é¢é‡;ä¸€è‡´æ€§ç”±
+ * scripts/__tests__/brand-identity-sync.test.mjs æ–­è¨€å…œåº•ã€‚
+ * âš ï¸ åªæè¿°ã€Œæœ¬åœ°æž„å»ºäº§ç‰©è·¯å¾„ã€ã€‚OSS/CDN æ¸ é“å‰ç¼€ä¸Žå‘å¸ƒäº§ç‰©æ–‡ä»¶å
+ * (xdt-maker-<version>-Setup.exe / .dmg / .zip ç­‰)ä»ç•™åœ¨è€å€¼:æ–°æ¸ é“ bucket
+ * æœªå°±ç»ª,å‘å¸ƒç›®æ ‡å¦è®®,ä¸éšæœ¬æ¬¡ç¿»è½¬ã€‚
  */
-export const PACKAGED_APP_NAME = 'Cindy';
+export const PACKAGED_APP_NAME = 'Echo';
 
 /**
- * 按区域取打包产物基名(exe / .app / 安装目录 / 快捷方式全部跟随)。
- * cn/global 同值 'Cindy'(2026-07-26 显示名统一决策,放弃文件层双装隔离),
- * dev 独立。镜像 brandIdentity.ts 的 executableNameByRegion,一致性由
- * scripts/__tests__/brand-identity-sync.test.mjs 断言兜底。
- * PACKAGED_APP_NAME 保留为正式版共同基线值,供未传 region 的 legacy 脚本使用。
+ * æŒ‰åŒºåŸŸå–æ‰“åŒ…äº§ç‰©åŸºå(exe / .app / å®‰è£…ç›®å½• / å¿«æ·æ–¹å¼å…¨éƒ¨è·Ÿéš)ã€‚
+ * cn/global åŒå€¼ 'Cindy'(2026-07-26 æ˜¾ç¤ºåç»Ÿä¸€å†³ç­–,æ”¾å¼ƒæ–‡ä»¶å±‚åŒè£…éš”ç¦»),
+ * dev ç‹¬ç«‹ã€‚é•œåƒ brandIdentity.ts çš„ executableNameByRegion,ä¸€è‡´æ€§ç”±
+ * scripts/__tests__/brand-identity-sync.test.mjs æ–­è¨€å…œåº•ã€‚
+ * PACKAGED_APP_NAME ä¿ç•™ä¸ºæ­£å¼ç‰ˆå…±åŒåŸºçº¿å€¼,ä¾›æœªä¼  region çš„ legacy è„šæœ¬ä½¿ç”¨ã€‚
  */
 export const PACKAGED_APP_NAME_BY_REGION = Object.freeze({
-  cn: 'Cindy',
-  global: 'Cindy',
-  dev: 'CindyDev',
+  cn: 'Echo',
+  global: 'Echo',
+  dev: 'EchoDev',
 });
 
 export function packagedAppName(region = 'global') {
@@ -89,15 +89,15 @@ export function packagedAppName(region = 'global') {
 }
 
 /**
- * 发布产物文件名基名(安装包 / 热更 zip / OSS key 里的文件名,用户下载可见)。
- * 老 'xdt-maker-*' 命名只属于已冻结的 /xdt-maker 渠道;新渠道(2026-07-19 实查
- * 现网 manifest 全 404,从零起步)统一用 cindy 命名,与 package-desktop.mjs 的
- * 本地产物命名对齐。
+ * å‘å¸ƒäº§ç‰©æ–‡ä»¶ååŸºå(å®‰è£…åŒ… / çƒ­æ›´ zip / OSS key é‡Œçš„æ–‡ä»¶å,ç”¨æˆ·ä¸‹è½½å¯è§)ã€‚
+ * è€ 'xdt-maker-*' å‘½ååªå±žäºŽå·²å†»ç»“çš„ /xdt-maker æ¸ é“;æ–°æ¸ é“(2026-07-19 å®žæŸ¥
+ * çŽ°ç½‘ manifest å…¨ 404,ä»Žé›¶èµ·æ­¥)ç»Ÿä¸€ç”¨ cindy å‘½å,ä¸Ž package-desktop.mjs çš„
+ * æœ¬åœ°äº§ç‰©å‘½åå¯¹é½ã€‚
  */
 export const RELEASE_ARTIFACT_BASENAME_BY_REGION = Object.freeze({
-  cn: 'cindy',
-  global: 'cindy',
-  dev: 'cindy-dev',
+  cn: 'echo',
+  global: 'echo',
+  dev: 'echo-dev',
 });
 
 export function releaseArtifactBasename(region = 'global') {
@@ -106,32 +106,32 @@ export function releaseArtifactBasename(region = 'global') {
   return name;
 }
 
-// CDN_BASE / OSS_BUCKET / OSS_PREFIX / OSS_REGION 由 scripts/shared/oss.mjs 提供并在顶部 re-export。
+// CDN_BASE / OSS_BUCKET / OSS_PREFIX / OSS_REGION ç”± scripts/shared/oss.mjs æä¾›å¹¶åœ¨é¡¶éƒ¨ re-exportã€‚
 
 /**
- * 渠道冻结硬闸(2026-07-17 身份翻转):老 /xdt-maker 渠道已冻结,存量 0.0.x
- * 用户的更新器按 --exe-name xdt-maker.exe 工作——把 Cindy 布局(Cindy.exe)
- * 的产物/manifest 发上老前缀,会让所有存量安装的自动更新当场断裂。
- * 在任何 desktop 发布/上传动作前调用;新渠道 bucket 就绪并把 OSS 前缀切走
- * 之前,发布一律拒绝。确需覆盖(如演练)显式设 XDT_ALLOW_LEGACY_CHANNEL_RELEASE=1。
+ * æ¸ é“å†»ç»“ç¡¬é—¸(2026-07-17 èº«ä»½ç¿»è½¬):è€ /xdt-maker æ¸ é“å·²å†»ç»“,å­˜é‡ 0.0.x
+ * ç”¨æˆ·çš„æ›´æ–°å™¨æŒ‰ --exe-name xdt-maker.exe å·¥ä½œâ€”â€”æŠŠ Cindy å¸ƒå±€(Cindy.exe)
+ * çš„äº§ç‰©/manifest å‘ä¸Šè€å‰ç¼€,ä¼šè®©æ‰€æœ‰å­˜é‡å®‰è£…çš„è‡ªåŠ¨æ›´æ–°å½“åœºæ–­è£‚ã€‚
+ * åœ¨ä»»ä½• desktop å‘å¸ƒ/ä¸Šä¼ åŠ¨ä½œå‰è°ƒç”¨;æ–°æ¸ é“ bucket å°±ç»ªå¹¶æŠŠ OSS å‰ç¼€åˆ‡èµ°
+ * ä¹‹å‰,å‘å¸ƒä¸€å¾‹æ‹’ç»ã€‚ç¡®éœ€è¦†ç›–(å¦‚æ¼”ç»ƒ)æ˜¾å¼è®¾ XDT_ALLOW_LEGACY_CHANNEL_RELEASE=1ã€‚
  */
 export function assertNotPublishingCindyToLegacyChannel(ossPrefix) {
   if (process.env.XDT_ALLOW_LEGACY_CHANNEL_RELEASE === '1') return;
   if (PACKAGED_APP_NAME === 'Cindy' && ossPrefix === 'xdt-maker') {
     throw new Error(
-      '[channel-freeze] 拒绝把 Cindy 身份的产物发布到已冻结的 /xdt-maker 渠道:'
-      + '存量用户更新器会因 exe 布局变化(Cindy.exe)当场断裂。'
-      + '等新渠道 OSS 前缀就绪后再发布;演练可设 XDT_ALLOW_LEGACY_CHANNEL_RELEASE=1 覆盖。',
+      '[channel-freeze] æ‹’ç»æŠŠ Cindy èº«ä»½çš„äº§ç‰©å‘å¸ƒåˆ°å·²å†»ç»“çš„ /xdt-maker æ¸ é“:'
+      + 'å­˜é‡ç”¨æˆ·æ›´æ–°å™¨ä¼šå›  exe å¸ƒå±€å˜åŒ–(Cindy.exe)å½“åœºæ–­è£‚ã€‚'
+      + 'ç­‰æ–°æ¸ é“ OSS å‰ç¼€å°±ç»ªåŽå†å‘å¸ƒ;æ¼”ç»ƒå¯è®¾ XDT_ALLOW_LEGACY_CHANNEL_RELEASE=1 è¦†ç›–ã€‚',
     );
   }
 }
 
-// ── Apple 公证/签名身份(macOS release / publish 共用;单点定义)────────────
-// 均为公开身份信息(非密钥;APPLE_APP_PASSWORD 才是密钥,只从 env 读)。
-// 2026-07-20 起**零代码默认值**:身份来自 release-regions.json 的 <region>.macSigning
-// (经 applyReleaseRegionConfigToEnv / applyMacSigningConfigToEnv 注入 env)或显式
-// env,缺失直接抛错——此前默认回落个人证书,会在密码/证书换主体后静默签错身份。
-// 必须是函数而非模块级 const:env 在调用时读取——消费脚本先注入配置再调用。
+// â”€â”€ Apple å…¬è¯/ç­¾åèº«ä»½(macOS release / publish å…±ç”¨;å•ç‚¹å®šä¹‰)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// å‡ä¸ºå…¬å¼€èº«ä»½ä¿¡æ¯(éžå¯†é’¥;APPLE_APP_PASSWORD æ‰æ˜¯å¯†é’¥,åªä»Ž env è¯»)ã€‚
+// 2026-07-20 èµ·**é›¶ä»£ç é»˜è®¤å€¼**:èº«ä»½æ¥è‡ª release-regions.json çš„ <region>.macSigning
+// (ç» applyReleaseRegionConfigToEnv / applyMacSigningConfigToEnv æ³¨å…¥ env)æˆ–æ˜¾å¼
+// env,ç¼ºå¤±ç›´æŽ¥æŠ›é”™â€”â€”æ­¤å‰é»˜è®¤å›žè½ä¸ªäººè¯ä¹¦,ä¼šåœ¨å¯†ç /è¯ä¹¦æ¢ä¸»ä½“åŽé™é»˜ç­¾é”™èº«ä»½ã€‚
+// å¿…é¡»æ˜¯å‡½æ•°è€Œéžæ¨¡å—çº§ const:env åœ¨è°ƒç”¨æ—¶è¯»å–â€”â€”æ¶ˆè´¹è„šæœ¬å…ˆæ³¨å…¥é…ç½®å†è°ƒç”¨ã€‚
 export function resolveAppleIdentity() {
   const appleId = process.env.APPLE_ID?.trim();
   const teamId = process.env.APPLE_TEAM_ID?.trim();
@@ -143,15 +143,15 @@ export function resolveAppleIdentity() {
   ].filter(Boolean);
   if (missing.length > 0) {
     throw new Error(
-      `mac 签名/公证身份缺失: ${missing.join(' / ')}。` +
-        '配置途径(推荐): apps/desktop/scripts/release-regions.json 的 <region>.macSigning' +
-        '(appleId / teamId / signIdentity);或直接设置同名环境变量。身份无代码默认值。',
+      `mac ç­¾å/å…¬è¯èº«ä»½ç¼ºå¤±: ${missing.join(' / ')}ã€‚` +
+        'é…ç½®é€”å¾„(æŽ¨è): apps/desktop/scripts/release-regions.json çš„ <region>.macSigning' +
+        '(appleId / teamId / signIdentity);æˆ–ç›´æŽ¥è®¾ç½®åŒåçŽ¯å¢ƒå˜é‡ã€‚èº«ä»½æ— ä»£ç é»˜è®¤å€¼ã€‚',
     );
   }
   return { appleId, teamId, signIdentity };
 }
 
-// ── .env 读取 ──────────────────────────────────────────────────────────────
+// â”€â”€ .env è¯»å– â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function loadDotenv(
   envFilePath = path.join(DESKTOP_ROOT, '.env'),
@@ -167,20 +167,20 @@ export function loadDotenv(
   if (refreshReleaseConfig) refreshOssConfig();
 }
 
-// ── 命令封装 ────────────────────────────────────────────────────────────────
-// (sha256 / gzipFile 已移至 scripts/shared/oss.mjs,顶部 re-export)
+// â”€â”€ å‘½ä»¤å°è£… â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// (sha256 / gzipFile å·²ç§»è‡³ scripts/shared/oss.mjs,é¡¶éƒ¨ re-export)
 
 export function exec(cmd, opts = {}) {
   console.log(`    $ ${cmd}`);
   return execSync(cmd, { stdio: 'inherit', ...opts });
 }
 
-// ── package.json 版本号写入 (退出时自动恢复) ────────────────────────────────
+// â”€â”€ package.json ç‰ˆæœ¬å·å†™å…¥ (é€€å‡ºæ—¶è‡ªåŠ¨æ¢å¤) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// electron-packager 会把 package.json 拷到 asar 内部，运行时 app.getVersion()
-// 优先读那里。源码里的 0.0.0 是版本无关构建哨兵；正式打包必须在 forge
-// 运行前临时写入真实版本，否则发布包会被 updateService 当成本地包而跳过更新。
-// 任何 exit / SIGINT / SIGTERM 都恢复，保证 git 工作区干净。
+// electron-packager ä¼šæŠŠ package.json æ‹·åˆ° asar å†…éƒ¨ï¼Œè¿è¡Œæ—¶ app.getVersion()
+// ä¼˜å…ˆè¯»é‚£é‡Œã€‚æºç é‡Œçš„ 0.0.0 æ˜¯ç‰ˆæœ¬æ— å…³æž„å»ºå“¨å…µï¼›æ­£å¼æ‰“åŒ…å¿…é¡»åœ¨ forge
+// è¿è¡Œå‰ä¸´æ—¶å†™å…¥çœŸå®žç‰ˆæœ¬ï¼Œå¦åˆ™å‘å¸ƒåŒ…ä¼šè¢« updateService å½“æˆæœ¬åœ°åŒ…è€Œè·³è¿‡æ›´æ–°ã€‚
+// ä»»ä½• exit / SIGINT / SIGTERM éƒ½æ¢å¤ï¼Œä¿è¯ git å·¥ä½œåŒºå¹²å‡€ã€‚
 
 const PACKAGE_JSON_PATH = path.join(DESKTOP_ROOT, 'package.json');
 let originalPackageJson = null;
@@ -202,12 +202,12 @@ function restorePackageJson() {
   try { fs.writeFileSync(PACKAGE_JSON_PATH, originalPackageJson); } catch { /* ignore */ }
 }
 
-// ── CDN manifest ───────────────────────────────────────────────────────────
+// â”€â”€ CDN manifest â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// 基线 manifest 必须带 ?t= cache-bust:CDN 对裸 URL 有边缘缓存(源站 Cache-Control:
-// no-cache 不一定被 CDN 尊重),客户端 manifestService 与 promote-canary-* 都带了,
-// 唯独发布脚本此前漏了——2026-07-03 事故的直接诱因就是发版时读到陈旧基线,误判
-// "版本变了" 而对已存在的版本化路径做了字节不同的覆盖上传。
+// åŸºçº¿ manifest å¿…é¡»å¸¦ ?t= cache-bust:CDN å¯¹è£¸ URL æœ‰è¾¹ç¼˜ç¼“å­˜(æºç«™ Cache-Control:
+// no-cache ä¸ä¸€å®šè¢« CDN å°Šé‡),å®¢æˆ·ç«¯ manifestService ä¸Ž promote-canary-* éƒ½å¸¦äº†,
+// å”¯ç‹¬å‘å¸ƒè„šæœ¬æ­¤å‰æ¼äº†â€”â€”2026-07-03 äº‹æ•…çš„ç›´æŽ¥è¯±å› å°±æ˜¯å‘ç‰ˆæ—¶è¯»åˆ°é™ˆæ—§åŸºçº¿,è¯¯åˆ¤
+// "ç‰ˆæœ¬å˜äº†" è€Œå¯¹å·²å­˜åœ¨çš„ç‰ˆæœ¬åŒ–è·¯å¾„åšäº†å­—èŠ‚ä¸åŒçš„è¦†ç›–ä¸Šä¼ ã€‚
 export async function fetchExistingManifestIfAvailable(platformKey, region = 'global') {
   const cdnBase = resolveReleaseCdnBaseUrl(region);
   const canaryUrl = `${cdnBase}/manifest-${platformKey}-canary.json?t=${Date.now()}`;
@@ -298,9 +298,9 @@ export function createLinuxFirstReleaseManifest(version, baseManifest, installer
 }
 
 /**
- * 宿主 Linux 的 platform key。linux 不做交叉打包(原生模块与 vec0.so 都是
- * per-arch 预编译件),所以缺省校验对象就是宿主自身;写死 linux-x64 会让
- * aarch64 机器去查一份根本不进包的资产。编排层仍应显式传目标 arch。
+ * å®¿ä¸» Linux çš„ platform keyã€‚linux ä¸åšäº¤å‰æ‰“åŒ…(åŽŸç”Ÿæ¨¡å—ä¸Ž vec0.so éƒ½æ˜¯
+ * per-arch é¢„ç¼–è¯‘ä»¶),æ‰€ä»¥ç¼ºçœæ ¡éªŒå¯¹è±¡å°±æ˜¯å®¿ä¸»è‡ªèº«;å†™æ­» linux-x64 ä¼šè®©
+ * aarch64 æœºå™¨åŽ»æŸ¥ä¸€ä»½æ ¹æœ¬ä¸è¿›åŒ…çš„èµ„äº§ã€‚ç¼–æŽ’å±‚ä»åº”æ˜¾å¼ä¼ ç›®æ ‡ archã€‚
  */
 export function linuxHostPlatformKey() {
   return `linux-${process.arch}`;
@@ -346,9 +346,9 @@ export async function ensureLinuxRuntimeAssets({
   label = 'Linux runtime assets',
   platformKey = linuxHostPlatformKey(),
 } = {}) {
-  // Claude/Codex 不打进 Linux 安装包，packaged runtime 会复用系统 CLI、迁移
-  // 旧缓存，或从官方上游下载带 SHA-256 校验的 pin 版本。Ripgrep 仍由 forge
-  // prePackage 单独 stage 进 resources/tools；这里仅校验 Git LFS 的 sqlite-vec。
+  // Claude/Codex ä¸æ‰“è¿› Linux å®‰è£…åŒ…ï¼Œpackaged runtime ä¼šå¤ç”¨ç³»ç»Ÿ CLIã€è¿ç§»
+  // æ—§ç¼“å­˜ï¼Œæˆ–ä»Žå®˜æ–¹ä¸Šæ¸¸ä¸‹è½½å¸¦ SHA-256 æ ¡éªŒçš„ pin ç‰ˆæœ¬ã€‚Ripgrep ä»ç”± forge
+  // prePackage å•ç‹¬ stage è¿› resources/toolsï¼›è¿™é‡Œä»…æ ¡éªŒ Git LFS çš„ sqlite-vecã€‚
   const sqliteVecPath = path.join(DESKTOP_ROOT, 'native', 'sqlite-vec', platformKey, 'vec0.so');
   const { missing, invalid } = collectLinuxRuntimeAssetProblems([sqliteVecPath]);
   if (missing.length === 0 && invalid.length === 0) return;
@@ -392,7 +392,7 @@ export function findInstallerArtifact(makeBaseDir, extension) {
   return null;
 }
 
-// ── Release manifest (本次构建的元数据) ─────────────────────────────────────
+// â”€â”€ Release manifest (æœ¬æ¬¡æž„å»ºçš„å…ƒæ•°æ®) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function writeReleaseManifest(destPath, ctx) {
   const journalPath = path.join(DESKTOP_ROOT, 'drizzle', 'meta', '_journal.json');
@@ -433,7 +433,7 @@ export function writeReleaseManifest(destPath, ctx) {
   console.log(`==> Release manifest written: ${destPath}`);
 }
 
-// ── Drizzle 校验 ───────────────────────────────────────────────────────────
+// â”€â”€ Drizzle æ ¡éªŒ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
 // macOS:   appPath/Contents/Resources/drizzle/
 // Windows: packagedDir/resources/drizzle/
@@ -467,7 +467,7 @@ export function verifyPackagedDrizzle(drizzleOut) {
   console.log(`    verified ${expectedSql.length} sql file(s) + journal`);
 }
 
-// ── DB validation pre-flight ───────────────────────────────────────────────
+// â”€â”€ DB validation pre-flight â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function runDbValidate() {
   console.log('==> Running db:validate pre-flight...');
@@ -482,12 +482,12 @@ export function runDbValidate() {
   }
 }
 
-// ── macOS local signing ────────────────────────────────────────────────────
+// â”€â”€ macOS local signing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const APPLE_TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/;
 const MAC_BUNDLE_ID_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$/;
 
-/** 正式签名包的 WebAuthn Touch ID keychain access group。 */
+/** æ­£å¼ç­¾ååŒ…çš„ WebAuthn Touch ID keychain access groupã€‚ */
 export function macWebAuthnKeychainAccessGroup(teamId, bundleId) {
   const normalizedTeamId = String(teamId ?? '').trim();
   const normalizedBundleId = String(bundleId ?? '').trim();
@@ -786,12 +786,12 @@ export function adhocSignMacApp(appPath, helperEntitlementsPath, mainEntitlement
   verifyMacContactsPermissions(appPath);
 }
 
-// ── macOS 正式签名 / 公证 / DMG(单点实现;publish-macos 与 package-desktop 共用)──
-// 原实现在 ci/publish-macos.mjs 与 release-macos.mjs 各有一份;此处为参数化版本,
-// Apple 身份由调用方传入(resolveAppleIdentity() + env APPLE_APP_PASSWORD)。
+// â”€â”€ macOS æ­£å¼ç­¾å / å…¬è¯ / DMG(å•ç‚¹å®žçŽ°;publish-macos ä¸Ž package-desktop å…±ç”¨)â”€â”€
+// åŽŸå®žçŽ°åœ¨ ci/publish-macos.mjs ä¸Ž release-macos.mjs å„æœ‰ä¸€ä»½;æ­¤å¤„ä¸ºå‚æ•°åŒ–ç‰ˆæœ¬,
+// Apple èº«ä»½ç”±è°ƒç”¨æ–¹ä¼ å…¥(resolveAppleIdentity() + env APPLE_APP_PASSWORD)ã€‚
 
 /**
- * Developer ID 由内向外逐层签名(Electron app 不能依赖 --deep)。
+ * Developer ID ç”±å†…å‘å¤–é€å±‚ç­¾å(Electron app ä¸èƒ½ä¾èµ– --deep)ã€‚
  * @param {{ signIdentity: string, teamId: string }} identity
  */
 export function signMacAppWithIdentity(
@@ -807,15 +807,15 @@ export function signMacAppWithIdentity(
   const signBase = `/usr/bin/codesign --force --timestamp --options runtime --sign "${identity.signIdentity}"`;
   const frameworksDir = path.join(appPath, 'Contents', 'Frameworks');
 
-  // 0. app.asar.unpacked/ 里的原生模块(better_sqlite3.node 等)是独立文件,
-  //    不单签的话 Gatekeeper 拒绝加载,app 直接打不开。
+  // 0. app.asar.unpacked/ é‡Œçš„åŽŸç”Ÿæ¨¡å—(better_sqlite3.node ç­‰)æ˜¯ç‹¬ç«‹æ–‡ä»¶,
+  //    ä¸å•ç­¾çš„è¯ Gatekeeper æ‹’ç»åŠ è½½,app ç›´æŽ¥æ‰“ä¸å¼€ã€‚
   const asarUnpackedDir = path.join(appPath, 'Contents', 'Resources', 'app.asar.unpacked');
   if (fs.existsSync(asarUnpackedDir)) {
     console.log('    Signing native modules in app.asar.unpacked/...');
     exec(`find "${asarUnpackedDir}" -type f | while IFS= read -r f; do if file "$f" | grep -qE "Mach-O"; then ${signBase} "$f"; fi; done`);
   }
 
-  // 0b. Contents/Resources/tools/ 下的 CLI 工具(extraResource 拷入,公证要求显式签)。
+  // 0b. Contents/Resources/tools/ ä¸‹çš„ CLI å·¥å…·(extraResource æ‹·å…¥,å…¬è¯è¦æ±‚æ˜¾å¼ç­¾)ã€‚
   const resourceToolsDir = path.join(appPath, 'Contents', 'Resources', 'tools');
   if (fs.existsSync(resourceToolsDir)) {
     console.log('    Signing bundled CLI tools in Contents/Resources/tools/...');
@@ -824,7 +824,7 @@ export function signMacAppWithIdentity(
     exec(`find "${resourceToolsDir}" -depth -type d -name "*.app" -exec ${signBase} "{}" \\;`);
   }
 
-  // 1. 全部 Mach-O(库、chrome_crashpad_handler、ShipIt 等)
+  // 1. å…¨éƒ¨ Mach-O(åº“ã€chrome_crashpad_handlerã€ShipIt ç­‰)
   console.log('    Signing all Mach-O binaries...');
   exec(`find "${frameworksDir}" -type f | while IFS= read -r f; do if file "$f" | grep -qE "Mach-O"; then ${signBase} "$f"; fi; done`);
 
@@ -836,7 +836,7 @@ export function signMacAppWithIdentity(
   console.log('    Signing frameworks...');
   exec(`find "${frameworksDir}" -maxdepth 1 -name "*.framework" -exec ${signBase} "{}" \\;`);
 
-  // 5. 主 app bundle
+  // 5. ä¸» app bundle
   console.log('    Signing main app...');
   exec(`${signBase} --entitlements "${mainEntitlementsPath}" "${appPath}"`);
 
@@ -872,9 +872,9 @@ function logCapturedNotarytoolOutput(result, operation, identity, logger) {
 }
 
 /**
- * 把 notarytool 的原始输出挂到 error 上。notarytool 对 Invalid 提交的 exit code 随
- * Xcode 版本变化(有的 0、有的非 0);非 0 那条路径也必须能从 stdout 里救回
- * submission id,否则拿不到 Apple 的详细失败原因。
+ * æŠŠ notarytool çš„åŽŸå§‹è¾“å‡ºæŒ‚åˆ° error ä¸Šã€‚notarytool å¯¹ Invalid æäº¤çš„ exit code éš
+ * Xcode ç‰ˆæœ¬å˜åŒ–(æœ‰çš„ 0ã€æœ‰çš„éž 0);éž 0 é‚£æ¡è·¯å¾„ä¹Ÿå¿…é¡»èƒ½ä»Ž stdout é‡Œæ•‘å›ž
+ * submission id,å¦åˆ™æ‹¿ä¸åˆ° Apple çš„è¯¦ç»†å¤±è´¥åŽŸå› ã€‚
  */
 function attachNotarytoolOutput(error, result) {
   error.notarytoolStdout = spawnOutputText(result?.stdout);
@@ -891,7 +891,7 @@ function runNotarytool(operation, args, identity, { spawnCommand, logger }) {
     });
   } catch (error) {
     const message = redactApplePassword(error?.message ?? error, identity.applePassword);
-    throw new Error(`notarytool ${operation} 无法执行:${message}`);
+    throw new Error(`notarytool ${operation} æ— æ³•æ‰§è¡Œ:${message}`);
   }
 
   if (result.error || result.signal || result.status !== 0) {
@@ -899,19 +899,19 @@ function runNotarytool(operation, args, identity, { spawnCommand, logger }) {
   }
   if (result.error) {
     const message = redactApplePassword(result.error.message, identity.applePassword);
-    throw new Error(`notarytool ${operation} 无法执行:${message}`);
+    throw new Error(`notarytool ${operation} æ— æ³•æ‰§è¡Œ:${message}`);
   }
   if (result.signal) {
     throw attachNotarytoolOutput(
       new Error(
-        `notarytool ${operation} 被信号 ${result.signal} 终止(可能公证超时);公证未通过。`,
+        `notarytool ${operation} è¢«ä¿¡å· ${result.signal} ç»ˆæ­¢(å¯èƒ½å…¬è¯è¶…æ—¶);å…¬è¯æœªé€šè¿‡ã€‚`,
       ),
       result,
     );
   }
   if (result.status !== 0) {
     throw attachNotarytoolOutput(
-      new Error(`notarytool ${operation} 失败(exit ${result.status});公证未通过。`),
+      new Error(`notarytool ${operation} å¤±è´¥(exit ${result.status});å…¬è¯æœªé€šè¿‡ã€‚`),
       result,
     );
   }
@@ -926,20 +926,20 @@ function parseNotarytoolSubmitResponse(stdout) {
   try {
     response = JSON.parse(stdout);
   } catch {
-    throw new Error('notarytool submit 未返回有效 JSON;公证结果无法确认。');
+    throw new Error('notarytool submit æœªè¿”å›žæœ‰æ•ˆ JSON;å…¬è¯ç»“æžœæ— æ³•ç¡®è®¤ã€‚');
   }
   if (!response || typeof response !== 'object' || Array.isArray(response)) {
-    throw new Error('notarytool submit JSON 结构无效;公证结果无法确认。');
+    throw new Error('notarytool submit JSON ç»“æž„æ— æ•ˆ;å…¬è¯ç»“æžœæ— æ³•ç¡®è®¤ã€‚');
   }
   const status = typeof response.status === 'string' ? response.status.trim() : '';
   const id = typeof response.id === 'string' ? response.id.trim() : '';
   if (!status) {
-    throw new Error('notarytool submit JSON 缺少 status;公证结果无法确认。');
+    throw new Error('notarytool submit JSON ç¼ºå°‘ status;å…¬è¯ç»“æžœæ— æ³•ç¡®è®¤ã€‚');
   }
   return { id, status };
 }
 
-/** 解析失败时返回 null(救援路径用):此时 exit code 已经说明公证没过。 */
+/** è§£æžå¤±è´¥æ—¶è¿”å›ž null(æ•‘æ´è·¯å¾„ç”¨):æ­¤æ—¶ exit code å·²ç»è¯´æ˜Žå…¬è¯æ²¡è¿‡ã€‚ */
 function tryParseNotarytoolSubmitResponse(stdout) {
   try {
     return parseNotarytoolSubmitResponse(stdout);
@@ -952,7 +952,7 @@ function printNotarizationFailureLog(submissionId, status, identity, dependencie
   const { logger } = dependencies;
   if (!submissionId) {
     logger.error(
-      `    Apple 公证返回 ${status}，但响应缺少 submission id，无法拉取详细日志。`,
+      `    Apple å…¬è¯è¿”å›ž ${status}ï¼Œä½†å“åº”ç¼ºå°‘ submission idï¼Œæ— æ³•æ‹‰å–è¯¦ç»†æ—¥å¿—ã€‚`,
     );
     return;
   }
@@ -983,12 +983,12 @@ function printNotarizationFailureLog(submissionId, status, identity, dependencie
     logger.error(output || '(empty log)');
   } catch (error) {
     const message = redactApplePassword(error?.message ?? error, identity.applePassword);
-    logger.error(`    WARN: 无法获取 Apple notarization log: ${message}`);
+    logger.error(`    WARN: æ— æ³•èŽ·å– Apple notarization log: ${message}`);
   }
 }
 
 /**
- * Apple notarytool 公证 + staple。
+ * Apple notarytool å…¬è¯ + stapleã€‚
  * @param {{ appleId: string, teamId: string, applePassword: string }} identity
  * @param {{
  *   execCommand?: typeof exec,
@@ -1010,13 +1010,13 @@ export function notarizeMacApp(appPath, identity, {
   execCommand(`/usr/bin/ditto -c -k --keepParent "${appPath}" "${zipPath}"`);
 
   logger.log('    Submitting to Apple notarization service (this may take a few minutes)...');
-  // 密码作为 --password 值直接传给 notarytool——不再用 --password @env:VAR 间接:
-  // 旧版 notarytool 不认 @env: 前缀,会把字面量 "@env:..." 当密码本身发出去而 401。
-  // 走 spawnSync 参数数组:避免 shell 参与(无插值/无注入面),且日志回显时对密码
-  // 打码(credentials 规则:输出不得含凭证明文)。
-  // 注意暴露面:密码仍作为 xcrun 的明文 argv 传入,--wait 期间(最长 30min)同机同
-  // 用户进程经 ps/proc 仍可读到——构建机为受控单租户环境,取此权衡;若需彻底消除
-  // argv 暴露,后续可改用 notarytool 的 --keychain-profile(@keychain: 凭据)。
+  // å¯†ç ä½œä¸º --password å€¼ç›´æŽ¥ä¼ ç»™ notarytoolâ€”â€”ä¸å†ç”¨ --password @env:VAR é—´æŽ¥:
+  // æ—§ç‰ˆ notarytool ä¸è®¤ @env: å‰ç¼€,ä¼šæŠŠå­—é¢é‡ "@env:..." å½“å¯†ç æœ¬èº«å‘å‡ºåŽ»è€Œ 401ã€‚
+  // èµ° spawnSync å‚æ•°æ•°ç»„:é¿å… shell å‚ä¸Ž(æ— æ’å€¼/æ— æ³¨å…¥é¢),ä¸”æ—¥å¿—å›žæ˜¾æ—¶å¯¹å¯†ç 
+  // æ‰“ç (credentials è§„åˆ™:è¾“å‡ºä¸å¾—å«å‡­è¯æ˜Žæ–‡)ã€‚
+  // æ³¨æ„æš´éœ²é¢:å¯†ç ä»ä½œä¸º xcrun çš„æ˜Žæ–‡ argv ä¼ å…¥,--wait æœŸé—´(æœ€é•¿ 30min)åŒæœºåŒ
+  // ç”¨æˆ·è¿›ç¨‹ç» ps/proc ä»å¯è¯»åˆ°â€”â€”æž„å»ºæœºä¸ºå—æŽ§å•ç§Ÿæˆ·çŽ¯å¢ƒ,å–æ­¤æƒè¡¡;è‹¥éœ€å½»åº•æ¶ˆé™¤
+  // argv æš´éœ²,åŽç»­å¯æ”¹ç”¨ notarytool çš„ --keychain-profile(@keychain: å‡­æ®)ã€‚
   const submitArgs = [
     'notarytool',
     'submit',
@@ -1040,8 +1040,8 @@ export function notarizeMacApp(appPath, identity, {
   try {
     submitResult = runNotarytool('submit', submitArgs, identity, dependencies);
   } catch (error) {
-    // notarytool 自己以非 0 退出:原始输出已由 runNotarytool 打过一遍,这里再尽力从
-    // stdout 里救出 submission id 去拉 Apple 的详细失败原因。zip 保留不删。
+    // notarytool è‡ªå·±ä»¥éž 0 é€€å‡º:åŽŸå§‹è¾“å‡ºå·²ç”± runNotarytool æ‰“è¿‡ä¸€é,è¿™é‡Œå†å°½åŠ›ä»Ž
+    // stdout é‡Œæ•‘å‡º submission id åŽ»æ‹‰ Apple çš„è¯¦ç»†å¤±è´¥åŽŸå› ã€‚zip ä¿ç•™ä¸åˆ ã€‚
     const salvaged = tryParseNotarytoolSubmitResponse(error?.notarytoolStdout ?? '');
     if (salvaged && salvaged.status !== 'Accepted') {
       printNotarizationFailureLog(salvaged.id, salvaged.status, identity, dependencies);
@@ -1063,9 +1063,9 @@ export function notarizeMacApp(appPath, identity, {
   if (submission.status !== 'Accepted') {
     printNotarizationFailureLog(submission.id, submission.status, identity, dependencies);
     throw new Error(
-      `Apple 公证未通过: status=${submission.status}` +
+      `Apple å…¬è¯æœªé€šè¿‡: status=${submission.status}` +
         (submission.id ? `, submission=${submission.id}` : '') +
-        '。',
+        'ã€‚',
     );
   }
 
@@ -1075,25 +1075,25 @@ export function notarizeMacApp(appPath, identity, {
   execCommand(`/usr/bin/xcrun stapler staple "${appPath}"`);
 }
 
-// ── DMG 安装界面(dmgbuild)─────────────────────────────────────────────────
+// â”€â”€ DMG å®‰è£…ç•Œé¢(dmgbuild)â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// DMG 用 dmgbuild(pip,纯 Python 无原生依赖)生成:Splash 品牌背景 + 图标定位的
-// 安装窗口,替代裸 hdiutil 的无布局窗口。背景为 **PDF 矢量**——macOS 26 Finder
-// 对位图背景只按 1x 绘制(Retina 必糊),但会按 backing scale 光栅化 PDF,
-// 这是唯一的高清通道;完整实测结论与视觉约束见
-// resources/dmg/render-background.swift 头注释。
+// DMG ç”¨ dmgbuild(pip,çº¯ Python æ— åŽŸç”Ÿä¾èµ–)ç”Ÿæˆ:Splash å“ç‰ŒèƒŒæ™¯ + å›¾æ ‡å®šä½çš„
+// å®‰è£…çª—å£,æ›¿ä»£è£¸ hdiutil çš„æ— å¸ƒå±€çª—å£ã€‚èƒŒæ™¯ä¸º **PDF çŸ¢é‡**â€”â€”macOS 26 Finder
+// å¯¹ä½å›¾èƒŒæ™¯åªæŒ‰ 1x ç»˜åˆ¶(Retina å¿…ç³Š),ä½†ä¼šæŒ‰ backing scale å…‰æ …åŒ– PDF,
+// è¿™æ˜¯å”¯ä¸€çš„é«˜æ¸…é€šé“;å®Œæ•´å®žæµ‹ç»“è®ºä¸Žè§†è§‰çº¦æŸè§
+// resources/dmg/render-background.swift å¤´æ³¨é‡Šã€‚
 
 /**
- * dmgbuild pin 版本;bump 前先在本机验证背景仍能渲染(macOS 26 Finder 很挑剔)。
- * ⚠️ 不得低于 1.6.6:旧版给背景写 bookmark 记录,macOS 26 Finder 不渲染
- * (electron-builder#9072 同源问题),1.6.6+ 才是 alias-only 实现。
+ * dmgbuild pin ç‰ˆæœ¬;bump å‰å…ˆåœ¨æœ¬æœºéªŒè¯èƒŒæ™¯ä»èƒ½æ¸²æŸ“(macOS 26 Finder å¾ˆæŒ‘å‰”)ã€‚
+ * âš ï¸ ä¸å¾—ä½ŽäºŽ 1.6.6:æ—§ç‰ˆç»™èƒŒæ™¯å†™ bookmark è®°å½•,macOS 26 Finder ä¸æ¸²æŸ“
+ * (electron-builder#9072 åŒæºé—®é¢˜),1.6.6+ æ‰æ˜¯ alias-only å®žçŽ°ã€‚
  */
 const DMGBUILD_VERSION = '1.6.7';
 
-/** dmgbuild 1.6.6+ 要求 python >= 3.10;系统 /usr/bin/python3(CLT 3.9)不够 */
+/** dmgbuild 1.6.6+ è¦æ±‚ python >= 3.10;ç³»ç»Ÿ /usr/bin/python3(CLT 3.9)ä¸å¤Ÿ */
 const PYTHON_MIN_MINOR = 10;
 
-/** 从候选里找 >= 3.10 的 python3(PATH 优先,兼容 homebrew / CLT 新版) */
+/** ä»Žå€™é€‰é‡Œæ‰¾ >= 3.10 çš„ python3(PATH ä¼˜å…ˆ,å…¼å®¹ homebrew / CLT æ–°ç‰ˆ) */
 function findPython3() {
   const candidates = ['python3', '/opt/homebrew/bin/python3', '/usr/local/bin/python3', '/usr/bin/python3'];
   for (const cand of candidates) {
@@ -1109,12 +1109,12 @@ function findPython3() {
 }
 
 /**
- * 确保 dmgbuild 可用,返回其可执行文件路径。
- * venv 建在当前用户 ~/.cache 下并按版本号隔离(幂等复用);不用 /tmp——共享
- * 构建机上其他本地用户可预占可预测的 /tmp 路径塞入恶意 dmgbuild,而签名打包
- * 进程 env 里带着 APPLE_* 凭证。~/.cache 仅本用户可写,消除预占面。
- * 凭证不入仓、生成物不进工作区;首次创建需要网络(pip);失败直接抛错阻断
- * 构建,不静默回退成无背景 DMG。
+ * ç¡®ä¿ dmgbuild å¯ç”¨,è¿”å›žå…¶å¯æ‰§è¡Œæ–‡ä»¶è·¯å¾„ã€‚
+ * venv å»ºåœ¨å½“å‰ç”¨æˆ· ~/.cache ä¸‹å¹¶æŒ‰ç‰ˆæœ¬å·éš”ç¦»(å¹‚ç­‰å¤ç”¨);ä¸ç”¨ /tmpâ€”â€”å…±äº«
+ * æž„å»ºæœºä¸Šå…¶ä»–æœ¬åœ°ç”¨æˆ·å¯é¢„å å¯é¢„æµ‹çš„ /tmp è·¯å¾„å¡žå…¥æ¶æ„ dmgbuild,è€Œç­¾åæ‰“åŒ…
+ * è¿›ç¨‹ env é‡Œå¸¦ç€ APPLE_* å‡­è¯ã€‚~/.cache ä»…æœ¬ç”¨æˆ·å¯å†™,æ¶ˆé™¤é¢„å é¢ã€‚
+ * å‡­è¯ä¸å…¥ä»“ã€ç”Ÿæˆç‰©ä¸è¿›å·¥ä½œåŒº;é¦–æ¬¡åˆ›å»ºéœ€è¦ç½‘ç»œ(pip);å¤±è´¥ç›´æŽ¥æŠ›é”™é˜»æ–­
+ * æž„å»º,ä¸é™é»˜å›žé€€æˆæ— èƒŒæ™¯ DMGã€‚
  */
 function ensureDmgbuild() {
   const venvDir = path.join(os.homedir(), '.cache', `cindy-dmgbuild-venv-${DMGBUILD_VERSION}`);
@@ -1127,10 +1127,10 @@ function ensureDmgbuild() {
 }
 
 /**
- * 生成带品牌安装界面的 UDZO DMG 并签名:Splash 风浅色背景(高清立绘 + CINDY
- * 字标 + 手写体 + 拖拽箭头,PDF 矢量高清)、app 居左 / Applications 软链居右、
- * 660×460 固定窗口。
- * 布局坐标与 resources/dmg/render-background.swift 内的品牌块/箭头位置联动,改动需两边同步。
+ * ç”Ÿæˆå¸¦å“ç‰Œå®‰è£…ç•Œé¢çš„ UDZO DMG å¹¶ç­¾å:Splash é£Žæµ…è‰²èƒŒæ™¯(é«˜æ¸…ç«‹ç»˜ + CINDY
+ * å­—æ ‡ + æ‰‹å†™ä½“ + æ‹–æ‹½ç®­å¤´,PDF çŸ¢é‡é«˜æ¸…)ã€app å±…å·¦ / Applications è½¯é“¾å±…å³ã€
+ * 660Ã—460 å›ºå®šçª—å£ã€‚
+ * å¸ƒå±€åæ ‡ä¸Ž resources/dmg/render-background.swift å†…çš„å“ç‰Œå—/ç®­å¤´ä½ç½®è”åŠ¨,æ”¹åŠ¨éœ€ä¸¤è¾¹åŒæ­¥ã€‚
  * @param {{ signIdentity: string }} identity
  */
 export function createMacDMG(appPath, dmgPath, volumeName, identity) {
@@ -1140,14 +1140,14 @@ export function createMacDMG(appPath, dmgPath, volumeName, identity) {
     throw new Error(`DMG background missing: ${backgroundPath}`);
   }
 
-  const appName = path.basename(appPath); // Cindy.app(cn/global)/ CindyDev.app(dev 线)
-  // JSON.stringify 产出合法 Python 字符串字面量(转义引号/反斜杠语义一致)
+  const appName = path.basename(appPath); // Cindy.app(cn/global)/ CindyDev.app(dev çº¿)
+  // JSON.stringify äº§å‡ºåˆæ³• Python å­—ç¬¦ä¸²å­—é¢é‡(è½¬ä¹‰å¼•å·/åæ–œæ è¯­ä¹‰ä¸€è‡´)
   const py = (s) => JSON.stringify(s);
   const settings = [
     `files = [${py(appPath)}]`,
     `symlinks = {'Applications': '/Applications'}`,
     `background = ${py(backgroundPath)}`,
-    // 与旧 hdiutil 产物格式保持一致(dmgbuild 默认 UDBZ)
+    // ä¸Žæ—§ hdiutil äº§ç‰©æ ¼å¼ä¿æŒä¸€è‡´(dmgbuild é»˜è®¤ UDBZ)
     `format = 'UDZO'`,
     `window_rect = ((200, 140), (660, 460))`,
     `icon_size = 110`,
@@ -1155,8 +1155,8 @@ export function createMacDMG(appPath, dmgPath, volumeName, identity) {
     `icon_locations = {`,
     `    ${py(appName)}: (175, 335),`,
     `    'Applications': (485, 335),`,
-    // 背景文件本体对默认设置的用户不可见;把坐标挪到远超可拉伸范围之外,
-    // 照顾开了"显示隐藏文件"的用户(背景画布 900×610,窗口可被拉得比这更大)
+    // èƒŒæ™¯æ–‡ä»¶æœ¬ä½“å¯¹é»˜è®¤è®¾ç½®çš„ç”¨æˆ·ä¸å¯è§;æŠŠåæ ‡æŒªåˆ°è¿œè¶…å¯æ‹‰ä¼¸èŒƒå›´ä¹‹å¤–,
+    // ç…§é¡¾å¼€äº†"æ˜¾ç¤ºéšè—æ–‡ä»¶"çš„ç”¨æˆ·(èƒŒæ™¯ç”»å¸ƒ 900Ã—610,çª—å£å¯è¢«æ‹‰å¾—æ¯”è¿™æ›´å¤§)
     `    '.background.pdf': (1600, 1200),`,
     `}`,
   ].join('\n');
@@ -1175,7 +1175,7 @@ export function createMacDMG(appPath, dmgPath, volumeName, identity) {
   exec(`/usr/bin/codesign --force --timestamp --sign "${identity.signIdentity}" "${dmgPath}"`);
 }
 
-// ── Smoke test (启动 packaged app) ──────────────────────────────────────────
+// â”€â”€ Smoke test (å¯åŠ¨ packaged app) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function runSmokeTest(platform, arch, region = 'global') {
   console.log('==> Running packaged smoke test...');
@@ -1185,7 +1185,7 @@ export function runSmokeTest(platform, arch, region = 'global') {
       'scripts/smoke-packaged.mjs',
       `--platform=${platform}`,
       `--arch=${arch}`,
-      // 产物基名按区域派生(cn/global 'Cindy' / dev 'CindyDev')。
+      // äº§ç‰©åŸºåæŒ‰åŒºåŸŸæ´¾ç”Ÿ(cn/global 'Cindy' / dev 'CindyDev')ã€‚
       `--app-name=${packagedAppName(region)}`,
     ],
     { stdio: 'inherit', cwd: DESKTOP_ROOT, shell: false },
@@ -1196,7 +1196,7 @@ export function runSmokeTest(platform, arch, region = 'global') {
   }
 }
 
-// ── Claude Code 二进制 ──────────────────────────────────────────────────────
+// â”€â”€ Claude Code äºŒè¿›åˆ¶ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function getLocalClaudeCodeVersion(platformKey, binaryName = 'claude') {
   const binPath = path.join(PROJECT_ROOT, 'apps', 'claude-code-bin', platformKey, binaryName);
@@ -1213,8 +1213,8 @@ export function getLocalClaudeCodeVersion(platformKey, binaryName = 'claude') {
 }
 
 /**
- * 比较本地 Claude Code 二进制与 CDN 上的版本和哈希，决定是否需要上传。
- * 返回 { uploadClaudeCode, gzPath, ccHash, ccSize, localBinHash } 或 null。
+ * æ¯”è¾ƒæœ¬åœ° Claude Code äºŒè¿›åˆ¶ä¸Ž CDN ä¸Šçš„ç‰ˆæœ¬å’Œå“ˆå¸Œï¼Œå†³å®šæ˜¯å¦éœ€è¦ä¸Šä¼ ã€‚
+ * è¿”å›ž { uploadClaudeCode, gzPath, ccHash, ccSize, localBinHash } æˆ– nullã€‚
  */
 export async function maybeBuildClaudeCodeGz({ platformKey, manifest, binaryName }) {
   const localCCVersion = getLocalClaudeCodeVersion(platformKey, binaryName);
@@ -1242,18 +1242,18 @@ export async function maybeBuildClaudeCodeGz({ platformKey, manifest, binaryName
   const hashDiffers = cdnCCBinaryHash ? localBinHash !== cdnCCBinaryHash : false;
 
   if (!versionDiffers && !hashDiffers) {
-    console.log(`    → verdict: SKIP (version and binary hash match CDN)`);
+    console.log(`    â†’ verdict: SKIP (version and binary hash match CDN)`);
     return null;
   }
 
   const reasons = [];
-  if (versionDiffers) reasons.push(`version ${cdnCCVersion} → ${localCCVersion}`);
+  if (versionDiffers) reasons.push(`version ${cdnCCVersion} â†’ ${localCCVersion}`);
   if (hashDiffers) reasons.push('binary content changed');
-  console.log(`    → verdict: UPLOAD (${reasons.join(', ')})`);
+  console.log(`    â†’ verdict: UPLOAD (${reasons.join(', ')})`);
 
   const gzName = binaryName === 'claude.exe' ? 'claude.exe.gz' : `claude-${platformKey.split('-')[1]}.gz`;
   const gzPath = path.join(RELEASE_DIR, gzName);
-  console.log(`    Compressing → ${gzName} ...`);
+  console.log(`    Compressing â†’ ${gzName} ...`);
   await gzipFile(binPath, gzPath);
   const ccHash = sha256(gzPath);
   const ccSize = fs.statSync(gzPath).size;
@@ -1340,32 +1340,32 @@ export async function maybeBuildCodexGz({ platformKey, manifest, binaryName }) {
   };
 }
 
-// ── 阿里云 OSS ─────────────────────────────────────────────────────────────
-// createOSSClient / uploadToOSS / getAKSK 已移至 scripts/shared/oss.mjs(顶部 re-export);
-// 下方 immutable 守卫通过 re-export 的 uploadToOSS / sha256 复用它们。
+// â”€â”€ é˜¿é‡Œäº‘ OSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// createOSSClient / uploadToOSS / getAKSK å·²ç§»è‡³ scripts/shared/oss.mjs(é¡¶éƒ¨ re-export);
+// ä¸‹æ–¹ immutable å®ˆå«é€šè¿‡ re-export çš„ uploadToOSS / sha256 å¤ç”¨å®ƒä»¬ã€‚
 
-// ── 版本化二进制对象 immutable 守卫 ─────────────────────────────────────────
+// â”€â”€ ç‰ˆæœ¬åŒ–äºŒè¿›åˆ¶å¯¹è±¡ immutable å®ˆå« â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //
-// 事故背景 (2026-07-03): claude-code/2.1.198/win32-x64/claude.exe.gz 在前后两次发版
-// 中被重复 gzip + 覆盖上传到同一 OSS 路径。gzip 输出不可复现(同一 exe 两次压缩字节
-// 不同),manifest 指向第二次的 sha256,而内网 CDN 边缘节点仍缓存第一次的字节 →
-// 客户端下载后 sha256 校验必失败,内网 Windows 用户全部「环境初始化失败」。
+// äº‹æ•…èƒŒæ™¯ (2026-07-03): claude-code/2.1.198/win32-x64/claude.exe.gz åœ¨å‰åŽä¸¤æ¬¡å‘ç‰ˆ
+// ä¸­è¢«é‡å¤ gzip + è¦†ç›–ä¸Šä¼ åˆ°åŒä¸€ OSS è·¯å¾„ã€‚gzip è¾“å‡ºä¸å¯å¤çŽ°(åŒä¸€ exe ä¸¤æ¬¡åŽ‹ç¼©å­—èŠ‚
+// ä¸åŒ),manifest æŒ‡å‘ç¬¬äºŒæ¬¡çš„ sha256,è€Œå†…ç½‘ CDN è¾¹ç¼˜èŠ‚ç‚¹ä»ç¼“å­˜ç¬¬ä¸€æ¬¡çš„å­—èŠ‚ â†’
+// å®¢æˆ·ç«¯ä¸‹è½½åŽ sha256 æ ¡éªŒå¿…å¤±è´¥,å†…ç½‘ Windows ç”¨æˆ·å…¨éƒ¨ã€ŒçŽ¯å¢ƒåˆå§‹åŒ–å¤±è´¥ã€ã€‚
 //
-// 原则:带版本号的 OSS 路径(claude-code/<ver>/... codex/<ver>/... ripgrep/<ver>/...)
-// 一经上传即视为 immutable,发布二进制一律走本守卫,不要直接 uploadToOSS:
-//   - 远端不存在           → 正常上传,并写 x-oss-meta-{gz,binary}-sha256,后续复核免下载
-//   - 远端存在且二进制同源 → 不上传,复用远端对象的 sha256/size 写 manifest。用户实际
-//                           下载的是远端字节,manifest 必须描述远端对象,而不是本地重压
-//                           的"等价"文件;同源与否以解压后二进制 sha256 为准(gz 字节
-//                           因 gzip 不可复现没有比较意义)
-//   - 远端存在且二进制不同 → 冲突(同一版本号出现两种内容,例如上游重打了 binary 没
-//                           bump 版本)。默认抛错拒绝;仅 force=true 时覆盖,且覆盖后
-//                           必须人工刷新内外网 CDN 缓存(告警会打印具体 URL)。
-//                           注意:同源场景即使 force 也走复用——覆盖等价字节没有任何
-//                           收益,只会重新制造 manifest 与 CDN 边缘缓存的字节分裂。
+// åŽŸåˆ™:å¸¦ç‰ˆæœ¬å·çš„ OSS è·¯å¾„(claude-code/<ver>/... codex/<ver>/... ripgrep/<ver>/...)
+// ä¸€ç»ä¸Šä¼ å³è§†ä¸º immutable,å‘å¸ƒäºŒè¿›åˆ¶ä¸€å¾‹èµ°æœ¬å®ˆå«,ä¸è¦ç›´æŽ¥ uploadToOSS:
+//   - è¿œç«¯ä¸å­˜åœ¨           â†’ æ­£å¸¸ä¸Šä¼ ,å¹¶å†™ x-oss-meta-{gz,binary}-sha256,åŽç»­å¤æ ¸å…ä¸‹è½½
+//   - è¿œç«¯å­˜åœ¨ä¸”äºŒè¿›åˆ¶åŒæº â†’ ä¸ä¸Šä¼ ,å¤ç”¨è¿œç«¯å¯¹è±¡çš„ sha256/size å†™ manifestã€‚ç”¨æˆ·å®žé™…
+//                           ä¸‹è½½çš„æ˜¯è¿œç«¯å­—èŠ‚,manifest å¿…é¡»æè¿°è¿œç«¯å¯¹è±¡,è€Œä¸æ˜¯æœ¬åœ°é‡åŽ‹
+//                           çš„"ç­‰ä»·"æ–‡ä»¶;åŒæºä¸Žå¦ä»¥è§£åŽ‹åŽäºŒè¿›åˆ¶ sha256 ä¸ºå‡†(gz å­—èŠ‚
+//                           å›  gzip ä¸å¯å¤çŽ°æ²¡æœ‰æ¯”è¾ƒæ„ä¹‰)
+//   - è¿œç«¯å­˜åœ¨ä¸”äºŒè¿›åˆ¶ä¸åŒ â†’ å†²çª(åŒä¸€ç‰ˆæœ¬å·å‡ºçŽ°ä¸¤ç§å†…å®¹,ä¾‹å¦‚ä¸Šæ¸¸é‡æ‰“äº† binary æ²¡
+//                           bump ç‰ˆæœ¬)ã€‚é»˜è®¤æŠ›é”™æ‹’ç»;ä»… force=true æ—¶è¦†ç›–,ä¸”è¦†ç›–åŽ
+//                           å¿…é¡»äººå·¥åˆ·æ–°å†…å¤–ç½‘ CDN ç¼“å­˜(å‘Šè­¦ä¼šæ‰“å°å…·ä½“ URL)ã€‚
+//                           æ³¨æ„:åŒæºåœºæ™¯å³ä½¿ force ä¹Ÿèµ°å¤ç”¨â€”â€”è¦†ç›–ç­‰ä»·å­—èŠ‚æ²¡æœ‰ä»»ä½•
+//                           æ”¶ç›Š,åªä¼šé‡æ–°åˆ¶é€  manifest ä¸Ž CDN è¾¹ç¼˜ç¼“å­˜çš„å­—èŠ‚åˆ†è£‚ã€‚
 //
-// 2026-07 之前上传的远端老对象没有 sha meta,此时把 gz 下载回来解压计算——只发生
-// 在同版本复发布的低频路径,用一次下载换确定性是值得的。
+// 2026-07 ä¹‹å‰ä¸Šä¼ çš„è¿œç«¯è€å¯¹è±¡æ²¡æœ‰ sha meta,æ­¤æ—¶æŠŠ gz ä¸‹è½½å›žæ¥è§£åŽ‹è®¡ç®—â€”â€”åªå‘ç”Ÿ
+// åœ¨åŒç‰ˆæœ¬å¤å‘å¸ƒçš„ä½Žé¢‘è·¯å¾„,ç”¨ä¸€æ¬¡ä¸‹è½½æ¢ç¡®å®šæ€§æ˜¯å€¼å¾—çš„ã€‚
 
 async function headVersionedGz(client, ossKey) {
   try {
@@ -1401,12 +1401,12 @@ async function computeRemoteGzInfo(client, ossKey) {
 }
 
 /**
- * 上传版本化 .gz 到 OSS,遵守 immutable 守卫(见上方大注释)。
+ * ä¸Šä¼ ç‰ˆæœ¬åŒ– .gz åˆ° OSS,éµå®ˆ immutable å®ˆå«(è§ä¸Šæ–¹å¤§æ³¨é‡Š)ã€‚
  *
  * @returns {{ uploaded: boolean, gzSha256: string, gzSize: number, binarySha256: string }}
- *   写入 manifest 时必须使用返回值里的 gzSha256/gzSize/binarySha256(reuse 场景下是
- *   远端对象的值,与本地新压的 gz 不同),不要继续用本地计算的值。
- * @throws 远端存在不同内容且未 force 时抛错(调用方按各自流程中止/标记失败)。
+ *   å†™å…¥ manifest æ—¶å¿…é¡»ä½¿ç”¨è¿”å›žå€¼é‡Œçš„ gzSha256/gzSize/binarySha256(reuse åœºæ™¯ä¸‹æ˜¯
+ *   è¿œç«¯å¯¹è±¡çš„å€¼,ä¸Žæœ¬åœ°æ–°åŽ‹çš„ gz ä¸åŒ),ä¸è¦ç»§ç»­ç”¨æœ¬åœ°è®¡ç®—çš„å€¼ã€‚
+ * @throws è¿œç«¯å­˜åœ¨ä¸åŒå†…å®¹ä¸”æœª force æ—¶æŠ›é”™(è°ƒç”¨æ–¹æŒ‰å„è‡ªæµç¨‹ä¸­æ­¢/æ ‡è®°å¤±è´¥)ã€‚
  */
 export async function uploadVersionedGzImmutable({
   client,
@@ -1419,17 +1419,17 @@ export async function uploadVersionedGzImmutable({
 }) {
   let remote = await headVersionedGz(client, ossKey);
 
-  // meta 缺失/不完整(2026-07 之前的老对象)或 HEAD 未返回 content-length(gzSize=0)
-  // → 下载复核,保证 reuse 时写进 manifest 的一定是远端对象的真实哈希与体积,绝不回退
-  // 用本地值凑数、也绝不让 size:0 进 manifest(客户端 downloader 按 size 强校验,
-  // size 错 = 该资产对全体用户下载必失败,与本次事故同级)。
+  // meta ç¼ºå¤±/ä¸å®Œæ•´(2026-07 ä¹‹å‰çš„è€å¯¹è±¡)æˆ– HEAD æœªè¿”å›ž content-length(gzSize=0)
+  // â†’ ä¸‹è½½å¤æ ¸,ä¿è¯ reuse æ—¶å†™è¿› manifest çš„ä¸€å®šæ˜¯è¿œç«¯å¯¹è±¡çš„çœŸå®žå“ˆå¸Œä¸Žä½“ç§¯,ç»ä¸å›žé€€
+  // ç”¨æœ¬åœ°å€¼å‡‘æ•°ã€ä¹Ÿç»ä¸è®© size:0 è¿› manifest(å®¢æˆ·ç«¯ downloader æŒ‰ size å¼ºæ ¡éªŒ,
+  // size é”™ = è¯¥èµ„äº§å¯¹å…¨ä½“ç”¨æˆ·ä¸‹è½½å¿…å¤±è´¥,ä¸Žæœ¬æ¬¡äº‹æ•…åŒçº§)ã€‚
   if (remote && (!remote.binarySha256 || !remote.gzSha256 || !remote.gzSize)) {
-    console.log(`    immutable guard: remote object missing sha meta or size — downloading to verify: ${ossKey}`);
+    console.log(`    immutable guard: remote object missing sha meta or size â€” downloading to verify: ${ossKey}`);
     remote = await computeRemoteGzInfo(client, ossKey);
   }
 
   if (remote && remote.binarySha256 === binarySha256) {
-    console.log(`    immutable guard: ${ossKey} already holds the same binary — reusing remote sha256/size, no upload`);
+    console.log(`    immutable guard: ${ossKey} already holds the same binary â€” reusing remote sha256/size, no upload`);
     return { uploaded: false, gzSha256: remote.gzSha256, gzSize: remote.gzSize, binarySha256: remote.binarySha256 };
   }
 
@@ -1439,15 +1439,15 @@ export async function uploadVersionedGzImmutable({
       throw new Error(
         `immutable guard: ${ossKey} already exists with DIFFERENT binary content ` +
         `(remote binary sha256 ${remote.binarySha256} != local ${binarySha256}). ` +
-        `版本化路径不允许覆盖上传——覆盖会与 CDN 边缘缓存产生字节分裂,导致客户端 sha256 校验失败 ` +
-        `(2026-07-03 事故)。确认远端内容确实过期时,用对应 release-*.mjs 加 --force 覆盖,` +
-        `覆盖后必须刷新内外网 CDN 该 URL 的缓存。`,
+        `ç‰ˆæœ¬åŒ–è·¯å¾„ä¸å…è®¸è¦†ç›–ä¸Šä¼ â€”â€”è¦†ç›–ä¼šä¸Ž CDN è¾¹ç¼˜ç¼“å­˜äº§ç”Ÿå­—èŠ‚åˆ†è£‚,å¯¼è‡´å®¢æˆ·ç«¯ sha256 æ ¡éªŒå¤±è´¥ ` +
+        `(2026-07-03 äº‹æ•…)ã€‚ç¡®è®¤è¿œç«¯å†…å®¹ç¡®å®žè¿‡æœŸæ—¶,ç”¨å¯¹åº” release-*.mjs åŠ  --force è¦†ç›–,` +
+        `è¦†ç›–åŽå¿…é¡»åˆ·æ–°å†…å¤–ç½‘ CDN è¯¥ URL çš„ç¼“å­˜ã€‚`,
       );
     }
     console.warn(`    !! FORCE overwrite of existing versioned object: ${ossKey}`);
-    console.warn('    !! 上传完成后必须手动刷新内外网 CDN 缓存,否则边缘节点会继续下发旧字节:');
+    console.warn('    !! ä¸Šä¼ å®ŒæˆåŽå¿…é¡»æ‰‹åŠ¨åˆ·æ–°å†…å¤–ç½‘ CDN ç¼“å­˜,å¦åˆ™è¾¹ç¼˜èŠ‚ç‚¹ä¼šç»§ç»­ä¸‹å‘æ—§å­—èŠ‚:');
     console.warn(`       - ${CDN_BASE}/${rel}`);
-    console.warn('       - 以及发布方内网 CDN 域名下的同路径(如有)');
+    console.warn('       - ä»¥åŠå‘å¸ƒæ–¹å†…ç½‘ CDN åŸŸåä¸‹çš„åŒè·¯å¾„(å¦‚æœ‰)');
   }
 
   await uploadToOSS(client, ossKey, gzPath, {
@@ -1455,3 +1455,4 @@ export async function uploadVersionedGzImmutable({
   });
   return { uploaded: true, gzSha256, gzSize, binarySha256 };
 }
+

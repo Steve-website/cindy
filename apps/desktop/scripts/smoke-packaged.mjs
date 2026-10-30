@@ -1,26 +1,26 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
 /**
- * smoke-packaged.mjs — 打包产物的端到端 smoke 测试（release 后置验收）。
+ * smoke-packaged.mjs â€” æ‰“åŒ…äº§ç‰©çš„ç«¯åˆ°ç«¯ smoke æµ‹è¯•ï¼ˆrelease åŽç½®éªŒæ”¶ï¼‰ã€‚
  *
- * 启动 packaged Electron exe，加上 `--smoke-test` flag：main 进程在 `app.on('ready')`
- * 里走 short-circuit 分支，跑 `ensureReady(fakeUserId)`、查 `schema_version` + 三张核心表
- * 的行数，把结果 JSON 输出到 stdout 后 `app.quit()`。
+ * å¯åŠ¨ packaged Electron exeï¼ŒåŠ ä¸Š `--smoke-test` flagï¼šmain è¿›ç¨‹åœ¨ `app.on('ready')`
+ * é‡Œèµ° short-circuit åˆ†æ”¯ï¼Œè·‘ `ensureReady(fakeUserId)`ã€æŸ¥ `schema_version` + ä¸‰å¼ æ ¸å¿ƒè¡¨
+ * çš„è¡Œæ•°ï¼ŒæŠŠç»“æžœ JSON è¾“å‡ºåˆ° stdout åŽ `app.quit()`ã€‚
  *
- * 用法：
+ * ç”¨æ³•ï¼š
  *   node scripts/smoke-packaged.mjs --platform=win32 --arch=x64
  *   node scripts/smoke-packaged.mjs --platform=darwin --arch=arm64
  *   node scripts/smoke-packaged.mjs --platform=darwin --arch=x64 --out-dir=custom/path
  *
- * 验收标准：
- *   - 子进程 60s 内正常退出（exit code = 0）
- *   - stdout 的 JSON 能解析且 `ok: true`
+ * éªŒæ”¶æ ‡å‡†ï¼š
+ *   - å­è¿›ç¨‹ 60s å†…æ­£å¸¸é€€å‡ºï¼ˆexit code = 0ï¼‰
+ *   - stdout çš„ JSON èƒ½è§£æžä¸” `ok: true`
  *   - `schema_version >= 0`
- *   - `tables.sessions / tables.messages / tables.migration_meta` 三个 count 都 ≥ 0
+ *   - `tables.sessions / tables.messages / tables.migration_meta` ä¸‰ä¸ª count éƒ½ â‰¥ 0
  *
- * 任一失败 → 打印诊断并 exit(1)；成功 → 打印 `✅ smoke test passed`。
+ * ä»»ä¸€å¤±è´¥ â†’ æ‰“å°è¯Šæ–­å¹¶ exit(1)ï¼›æˆåŠŸ â†’ æ‰“å° `âœ… smoke test passed`ã€‚
  *
- * 退出前清理临时 userData 目录（不留垃圾）。
+ * é€€å‡ºå‰æ¸…ç†ä¸´æ—¶ userData ç›®å½•ï¼ˆä¸ç•™åžƒåœ¾ï¼‰ã€‚
  */
 
 import fs from 'node:fs';
@@ -34,17 +34,17 @@ const __dirname = path.dirname(__filename);
 const DESKTOP_ROOT = path.resolve(__dirname, '..');
 
 /**
- * electron-forge 打包产物基名默认值(out 目录 / exe / .app / linux 二进制同名)。
- * ⚠️ 值必须与 packages/maker-shared/src/brandIdentity.ts 的
- * BRAND_IDENTITY.executableName 及 ci/lib.mjs 的 PACKAGED_APP_NAME 一致
- * (本脚本刻意零外部依赖,不 import lib.mjs;一致性由
- * scripts/__tests__/brand-identity-sync.test.mjs 断言兜底)。
- * 区域化:产物基名按区域派生(cn/global 'Cindy' / dev 'CindyDev'),由调用方
- * (ci/lib.mjs runSmokeTest)经 --app-name= 传入覆盖,本默认值服务 global / 手跑。
+ * electron-forge æ‰“åŒ…äº§ç‰©åŸºåé»˜è®¤å€¼(out ç›®å½• / exe / .app / linux äºŒè¿›åˆ¶åŒå)ã€‚
+ * âš ï¸ å€¼å¿…é¡»ä¸Ž packages/maker-shared/src/brandIdentity.ts çš„
+ * BRAND_IDENTITY.executableName åŠ ci/lib.mjs çš„ PACKAGED_APP_NAME ä¸€è‡´
+ * (æœ¬è„šæœ¬åˆ»æ„é›¶å¤–éƒ¨ä¾èµ–,ä¸ import lib.mjs;ä¸€è‡´æ€§ç”±
+ * scripts/__tests__/brand-identity-sync.test.mjs æ–­è¨€å…œåº•)ã€‚
+ * åŒºåŸŸåŒ–:äº§ç‰©åŸºåæŒ‰åŒºåŸŸæ´¾ç”Ÿ(cn/global 'Cindy' / dev 'CindyDev'),ç”±è°ƒç”¨æ–¹
+ * (ci/lib.mjs runSmokeTest)ç» --app-name= ä¼ å…¥è¦†ç›–,æœ¬é»˜è®¤å€¼æœåŠ¡ global / æ‰‹è·‘ã€‚
  */
-const PACKAGED_APP_NAME = 'Cindy';
+const PACKAGED_APP_NAME = 'Echo';
 
-// ── Arg parsing ───────────────────────────────────────────────────────────
+// â”€â”€ Arg parsing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -75,11 +75,11 @@ if (!['x64', 'arm64'].includes(arch)) {
 
 console.log(`[smoke] platform=${platform} arch=${arch}`);
 
-// ── Locate packaged executable ───────────────────────────────────────────
+// â”€â”€ Locate packaged executable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * electron-forge 把 packaged 应用放在 `out/<PACKAGED_APP_NAME>-<platform>-<arch>/`。
- * 入口 exe 位置：
+ * electron-forge æŠŠ packaged åº”ç”¨æ”¾åœ¨ `out/<PACKAGED_APP_NAME>-<platform>-<arch>/`ã€‚
+ * å…¥å£ exe ä½ç½®ï¼š
  *   - Windows: <packaged>/<PACKAGED_APP_NAME>.exe
  *   - macOS:   <packaged>/<PACKAGED_APP_NAME>.app/Contents/MacOS/<PACKAGED_APP_NAME>
  *   - Linux:   <packaged>/<PACKAGED_APP_NAME>
@@ -121,14 +121,14 @@ function resolveExePath() {
 const exePath = resolveExePath();
 console.log(`[smoke] exe: ${exePath}`);
 
-// ARM64 macOS host 上无法通过 Rosetta 可靠运行 x64 Electron（Chromium 131+ SIGILL）。
-// 跳过前验证：产物存在（resolveExePath）+ 可执行 + 确实是 x86_64 Mach-O。
-// 用 sysctl hw.optional.arm64 检测物理 CPU（即使当前进程跑在 Rosetta 下也返回 1）。
+// ARM64 macOS host ä¸Šæ— æ³•é€šè¿‡ Rosetta å¯é è¿è¡Œ x64 Electronï¼ˆChromium 131+ SIGILLï¼‰ã€‚
+// è·³è¿‡å‰éªŒè¯ï¼šäº§ç‰©å­˜åœ¨ï¼ˆresolveExePathï¼‰+ å¯æ‰§è¡Œ + ç¡®å®žæ˜¯ x86_64 Mach-Oã€‚
+// ç”¨ sysctl hw.optional.arm64 æ£€æµ‹ç‰©ç† CPUï¼ˆå³ä½¿å½“å‰è¿›ç¨‹è·‘åœ¨ Rosetta ä¸‹ä¹Ÿè¿”å›ž 1ï¼‰ã€‚
 if (platform === 'darwin' && arch === 'x64') {
   let isPhysicalArm64 = false;
   try {
     isPhysicalArm64 = execSync('sysctl -in hw.optional.arm64', { encoding: 'utf-8' }).trim() === '1';
-  } catch { /* sysctl 失败（如 Intel Mac unknown oid）→ 不是 ARM64，继续正常 smoke */ }
+  } catch { /* sysctl å¤±è´¥ï¼ˆå¦‚ Intel Mac unknown oidï¼‰â†’ ä¸æ˜¯ ARM64ï¼Œç»§ç»­æ­£å¸¸ smoke */ }
 
   if (isPhysicalArm64) {
     try {
@@ -139,7 +139,7 @@ if (platform === 'darwin' && arch === 'x64') {
         process.exit(1);
       }
       console.log(`[smoke] SKIP: x64 Electron launch on arm64 host (binary verified: ${archInfo})`);
-      console.log('✅ smoke test skipped (packaged x86_64 binary verified)');
+      console.log('âœ… smoke test skipped (packaged x86_64 binary verified)');
       process.exit(0);
     } catch (err) {
       console.error(`[smoke] FAIL: binary verification failed: ${err.message}`);
@@ -148,7 +148,7 @@ if (platform === 'darwin' && arch === 'x64') {
   }
 }
 
-// ── Temp userData dir ────────────────────────────────────────────────────
+// â”€â”€ Temp userData dir â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const tmpUserData = fs.mkdtempSync(path.join(os.tmpdir(), 'xdt-smoke-'));
 console.log(`[smoke] userData: ${tmpUserData}`);
@@ -161,7 +161,7 @@ function cleanupUserData() {
   }
 }
 
-// ── Spawn & capture ──────────────────────────────────────────────────────
+// â”€â”€ Spawn & capture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SMOKE_USER = '__smoke_test__';
 const TIMEOUT_MS = 60_000;
@@ -178,8 +178,8 @@ const child = spawn(
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
-      // 禁用自动更新 / Windows Squirrel startup 钩子（smoke 跑的是已安装的 exe，
-      // 但为了稳妥这里也显式清掉会影响启动的环境变量）
+      // ç¦ç”¨è‡ªåŠ¨æ›´æ–° / Windows Squirrel startup é’©å­ï¼ˆsmoke è·‘çš„æ˜¯å·²å®‰è£…çš„ exeï¼Œ
+      // ä½†ä¸ºäº†ç¨³å¦¥è¿™é‡Œä¹Ÿæ˜¾å¼æ¸…æŽ‰ä¼šå½±å“å¯åŠ¨çš„çŽ¯å¢ƒå˜é‡ï¼‰
       ELECTRON_DISABLE_SANDBOX: '1',
     },
   },
@@ -216,7 +216,7 @@ child.on('exit', (code, signal) => {
     console.log('[smoke] ---');
   }
 
-  // 解析最后一行 JSON（stdout 可能夹杂 Electron / Chromium 的预热日志）
+  // è§£æžæœ€åŽä¸€è¡Œ JSONï¼ˆstdout å¯èƒ½å¤¹æ‚ Electron / Chromium çš„é¢„çƒ­æ—¥å¿—ï¼‰
   const jsonLine = extractJsonLine(stdoutBuf) || extractJsonLine(stderrBuf);
   if (!jsonLine) {
     console.error('[smoke] FAIL: no JSON result line found in stdout/stderr');
@@ -234,7 +234,7 @@ child.on('exit', (code, signal) => {
     process.exit(1);
   }
 
-  // 验收
+  // éªŒæ”¶
   if (parsed.ok !== true) {
     console.error(`[smoke] FAIL: main reported ok=false, error=${parsed.error || '(none)'}`);
     cleanupUserData();
@@ -279,7 +279,7 @@ child.on('exit', (code, signal) => {
   }
 
   console.log(
-    `✅ smoke test passed: schema_version=${parsed.schema_version}, ` +
+    `âœ… smoke test passed: schema_version=${parsed.schema_version}, ` +
       `sessions=${t.sessions}, messages=${t.messages}, migration_meta=${t.migration_meta}` +
       (pluginStorage ? ', plugin_storage=passed' : ''),
   );
@@ -294,10 +294,10 @@ child.on('error', (err) => {
   process.exit(1);
 });
 
-// ── Helpers ──────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * 从混合输出中挑出最后一行以 `{` 开头 `}` 结尾的 JSON 行。
+ * ä»Žæ··åˆè¾“å‡ºä¸­æŒ‘å‡ºæœ€åŽä¸€è¡Œä»¥ `{` å¼€å¤´ `}` ç»“å°¾çš„ JSON è¡Œã€‚
  * @param {string} buf
  * @returns {string | null}
  */
@@ -311,3 +311,4 @@ function extractJsonLine(buf) {
   }
   return null;
 }
+

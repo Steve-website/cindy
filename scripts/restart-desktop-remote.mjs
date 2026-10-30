@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
@@ -39,17 +39,17 @@ const desktopDevCacheRelativeDirs = Object.freeze([
 ]);
 
 /**
- * 产品默认 userData 目录基名。⚠️ 值必须与
- * packages/maker-shared/src/brandIdentity.ts 的 BRAND_IDENTITY.userDataDirName
- * 一致——.mjs 无法 import TS 单点,只能镜像字面量;
- * 一致性由 scripts/__tests__/brand-identity-sync.test.mjs 断言兜底。
+ * äº§å“é»˜è®¤ userData ç›®å½•åŸºåã€‚âš ï¸ å€¼å¿…é¡»ä¸Ž
+ * packages/maker-shared/src/brandIdentity.ts çš„ BRAND_IDENTITY.userDataDirName
+ * ä¸€è‡´â€”â€”.mjs æ— æ³• import TS å•ç‚¹,åªèƒ½é•œåƒå­—é¢é‡;
+ * ä¸€è‡´æ€§ç”± scripts/__tests__/brand-identity-sync.test.mjs æ–­è¨€å…œåº•ã€‚
  */
-export const BRAND_USER_DATA_DIR_NAME = 'Cindy';
+export const BRAND_USER_DATA_DIR_NAME = 'Echo';
 
-// 桌面端 .env 默认值。2026-07 端点清单重构后 .env 不再承载任何端点 URL
-// (运行期端点全部来自清单:remote restart 按 region 读 config/endpoint*.json,
-// local 模式读生成的 config/endpoint.local.json,--endpoints-cdn 走线上 CDN),这里只
-// 保留 region 身份。飞书登录构建变量已退役,不再创建或补写。
+// æ¡Œé¢ç«¯ .env é»˜è®¤å€¼ã€‚2026-07 ç«¯ç‚¹æ¸…å•é‡æž„åŽ .env ä¸å†æ‰¿è½½ä»»ä½•ç«¯ç‚¹ URL
+// (è¿è¡ŒæœŸç«¯ç‚¹å…¨éƒ¨æ¥è‡ªæ¸…å•:remote restart æŒ‰ region è¯» config/endpoint*.json,
+// local æ¨¡å¼è¯»ç”Ÿæˆçš„ config/endpoint.local.json,--endpoints-cdn èµ°çº¿ä¸Š CDN),è¿™é‡Œåª
+// ä¿ç•™ region èº«ä»½ã€‚é£žä¹¦ç™»å½•æž„å»ºå˜é‡å·²é€€å½¹,ä¸å†åˆ›å»ºæˆ–è¡¥å†™ã€‚
 function desktopEnvSpec() {
   return [{ key: 'VITE_CINDY_AUTH_REGION', value: 'global', force: false }];
 }
@@ -127,9 +127,9 @@ export function commandContainsPath(command, candidatePath) {
     const before = normalizedCommand[index - 1];
     const after = normalizedCommand[index + normalizedPath.length];
     const hasStartBoundary = before === undefined || /\s|["'=]/.test(before);
-    // 命令行无法安全区分「裸 root 后接参数」和「带空格的 sibling 路径」。
-    // 空格当结束边界会误伤 sibling；不当结束会漏认裸路径。desktop-dev 命令行里
-    // checkout 都以 /node_modules 或 /apps/desktop 出现，保守匹配足够。
+    // å‘½ä»¤è¡Œæ— æ³•å®‰å…¨åŒºåˆ†ã€Œè£¸ root åŽæŽ¥å‚æ•°ã€å’Œã€Œå¸¦ç©ºæ ¼çš„ sibling è·¯å¾„ã€ã€‚
+    // ç©ºæ ¼å½“ç»“æŸè¾¹ç•Œä¼šè¯¯ä¼¤ siblingï¼›ä¸å½“ç»“æŸä¼šæ¼è®¤è£¸è·¯å¾„ã€‚desktop-dev å‘½ä»¤è¡Œé‡Œ
+    // checkout éƒ½ä»¥ /node_modules æˆ– /apps/desktop å‡ºçŽ°ï¼Œä¿å®ˆåŒ¹é…è¶³å¤Ÿã€‚
     const hasEndBoundary = after === undefined || after === '/' || after === '"' || after === "'";
     if (hasStartBoundary && hasEndBoundary) return true;
     index = normalizedCommand.indexOf(normalizedPath, index + 1);
@@ -138,17 +138,17 @@ export function commandContainsPath(command, candidatePath) {
 }
 
 /**
- * 判断进程命令行是否带 `--user-data-dir=<userDataDir>`(Electron helper 进程携带)。
- * 结束边界必须是行尾 / 空白 / 引号 / 斜杠 —— `Cindy-dev` 不得命中
- * `Cindy-dev-pi-latest` 这类前缀同名沙箱。路径本身可含空格(macOS 的
- * "Application Support"),所以整段 needle 精确匹配、只对尾部做边界判定。
+ * åˆ¤æ–­è¿›ç¨‹å‘½ä»¤è¡Œæ˜¯å¦å¸¦ `--user-data-dir=<userDataDir>`(Electron helper è¿›ç¨‹æºå¸¦)ã€‚
+ * ç»“æŸè¾¹ç•Œå¿…é¡»æ˜¯è¡Œå°¾ / ç©ºç™½ / å¼•å· / æ–œæ  â€”â€” `Cindy-dev` ä¸å¾—å‘½ä¸­
+ * `Cindy-dev-pi-latest` è¿™ç±»å‰ç¼€åŒåæ²™ç®±ã€‚è·¯å¾„æœ¬èº«å¯å«ç©ºæ ¼(macOS çš„
+ * "Application Support"),æ‰€ä»¥æ•´æ®µ needle ç²¾ç¡®åŒ¹é…ã€åªå¯¹å°¾éƒ¨åšè¾¹ç•Œåˆ¤å®šã€‚
  */
 export function commandUsesUserDataDir(command, userDataDir) {
   const normalizedCommand = normalize(command);
   const normalizedDir = stripTrailingSlashes(normalize(userDataDir));
   if (!normalizedDir) return false;
-  // 值可能带引号(Windows 常见: --user-data-dir="C:\..."), 裸值与引号包裹
-  // 两种形态都要命中, 否则冲突检测漏判会放行进共享 SQLite/登录态。
+  // å€¼å¯èƒ½å¸¦å¼•å·(Windows å¸¸è§: --user-data-dir="C:\..."), è£¸å€¼ä¸Žå¼•å·åŒ…è£¹
+  // ä¸¤ç§å½¢æ€éƒ½è¦å‘½ä¸­, å¦åˆ™å†²çªæ£€æµ‹æ¼åˆ¤ä¼šæ”¾è¡Œè¿›å…±äº« SQLite/ç™»å½•æ€ã€‚
   const needles = [
     `--user-data-dir=${normalizedDir}`,
     `--user-data-dir="${normalizedDir}`,
@@ -168,10 +168,10 @@ export function commandUsesUserDataDir(command, userDataDir) {
 }
 
 /**
- * 进程是否属于 ownRootDir 这份 checkout。Cindy 托管的 `.cindy-worktrees/<name>`
- * 嵌在主 checkout 目录里，只看路径前缀会把托管 worktree 的 dev 当成主 checkout
- * 自己的进程（主仓 restart 误杀并行实例、userData 冲突门漏检）。归属以命中的
- * 最深 checkout 为准：同时命中嵌套在 ownRootDir 下的其他 worktree 时不算自己的。
+ * è¿›ç¨‹æ˜¯å¦å±žäºŽ ownRootDir è¿™ä»½ checkoutã€‚Cindy æ‰˜ç®¡çš„ `.cindy-worktrees/<name>`
+ * åµŒåœ¨ä¸» checkout ç›®å½•é‡Œï¼Œåªçœ‹è·¯å¾„å‰ç¼€ä¼šæŠŠæ‰˜ç®¡ worktree çš„ dev å½“æˆä¸» checkout
+ * è‡ªå·±çš„è¿›ç¨‹ï¼ˆä¸»ä»“ restart è¯¯æ€å¹¶è¡Œå®žä¾‹ã€userData å†²çªé—¨æ¼æ£€ï¼‰ã€‚å½’å±žä»¥å‘½ä¸­çš„
+ * æœ€æ·± checkout ä¸ºå‡†ï¼šåŒæ—¶å‘½ä¸­åµŒå¥—åœ¨ ownRootDir ä¸‹çš„å…¶ä»– worktree æ—¶ä¸ç®—è‡ªå·±çš„ã€‚
  */
 export function commandBelongsToCheckout(command, ownRootDir, checkoutPaths = []) {
   if (!commandContainsPath(command, ownRootDir)) return false;
@@ -183,9 +183,9 @@ export function commandBelongsToCheckout(command, ownRootDir, checkoutPaths = []
 }
 
 /**
- * 重启的 kill 作用域:只收当前 checkout(ownRootDir)自己的 dev 进程。其他
- * worktree / 命名沙箱一律保留 ——「重启」的语义是重启这份 checkout 的实例,
- * 不是清场(2026-07-30 约束:PI 沙箱启动器曾全灭掉并行的 tgbot-review 沙箱)。
+ * é‡å¯çš„ kill ä½œç”¨åŸŸ:åªæ”¶å½“å‰ checkout(ownRootDir)è‡ªå·±çš„ dev è¿›ç¨‹ã€‚å…¶ä»–
+ * worktree / å‘½åæ²™ç®±ä¸€å¾‹ä¿ç•™ â€”â€”ã€Œé‡å¯ã€çš„è¯­ä¹‰æ˜¯é‡å¯è¿™ä»½ checkout çš„å®žä¾‹,
+ * ä¸æ˜¯æ¸…åœº(2026-07-30 çº¦æŸ:PI æ²™ç®±å¯åŠ¨å™¨æ›¾å…¨ç­æŽ‰å¹¶è¡Œçš„ tgbot-review æ²™ç®±)ã€‚
  */
 export function partitionDesktopDevProcesses(processes, ownRootDir, checkoutPaths = []) {
   const targets = [];
@@ -205,8 +205,8 @@ function run(command, args, options = {}) {
 }
 
 /**
- * `ps -eo …` 在装了上千个进程的机器上已经超过 spawnSync 默认的 1 MiB，溢出时
- * status 是 null、stdout 只剩半截。上限与 desktop-whoami 共用一个常量。
+ * `ps -eo â€¦` åœ¨è£…äº†ä¸Šåƒä¸ªè¿›ç¨‹çš„æœºå™¨ä¸Šå·²ç»è¶…è¿‡ spawnSync é»˜è®¤çš„ 1 MiBï¼Œæº¢å‡ºæ—¶
+ * status æ˜¯ nullã€stdout åªå‰©åŠæˆªã€‚ä¸Šé™ä¸Ž desktop-whoami å…±ç”¨ä¸€ä¸ªå¸¸é‡ã€‚
  */
 function processScanError(code, detail) {
   return new Error(
@@ -306,9 +306,9 @@ export function clearDesktopDevCaches(root = rootDir, { logger = console } = {})
 }
 
 /**
- * 读全量进程表。失败时抛错而不是返回空数组：scan 不到进程时「没找到本 checkout 的
- * dev 进程」和「真的有进程」看起来一模一样，kill 阶段会因此静默地不杀任何东西，旧实例
- * 残留后撞单实例锁。向上抛错 + 独立的 PROCESS_SCAN_FAILED verdict 才能让人看到原因。
+ * è¯»å…¨é‡è¿›ç¨‹è¡¨ã€‚å¤±è´¥æ—¶æŠ›é”™è€Œä¸æ˜¯è¿”å›žç©ºæ•°ç»„ï¼šscan ä¸åˆ°è¿›ç¨‹æ—¶ã€Œæ²¡æ‰¾åˆ°æœ¬ checkout çš„
+ * dev è¿›ç¨‹ã€å’Œã€ŒçœŸçš„æœ‰è¿›ç¨‹ã€çœ‹èµ·æ¥ä¸€æ¨¡ä¸€æ ·ï¼Œkill é˜¶æ®µä¼šå› æ­¤é™é»˜åœ°ä¸æ€ä»»ä½•ä¸œè¥¿ï¼Œæ—§å®žä¾‹
+ * æ®‹ç•™åŽæ’žå•å®žä¾‹é”ã€‚å‘ä¸ŠæŠ›é”™ + ç‹¬ç«‹çš„ PROCESS_SCAN_FAILED verdict æ‰èƒ½è®©äººçœ‹åˆ°åŽŸå› ã€‚
  */
 export function scanRestartProcessTable({ platform = process.platform, runCommand = run } = {}) {
   if (platform === 'win32') {
@@ -384,10 +384,10 @@ function hasRepositoryCheckoutPath(command, checkoutPaths = repositoryWorktreePa
   return checkoutPaths.some((checkoutPath) => commandContainsPath(command, checkoutPath));
 }
 
-// 沿 ppid 链向上找祖先里有没有 Cindy desktop dev 进程。
-// 用途：拦住"agent 跑在【当前 checkout】的 desktop dev 里还调 restart"这种自杀场景——
-// kill 作用域虽已限本 checkout，但祖先就是这份 checkout 时仍会把本脚本一起收掉。
-// 宿主是正式版或另一个 worktree 时不拦：杀不到那份祖先，隔离启动可以继续。
+// æ²¿ ppid é“¾å‘ä¸Šæ‰¾ç¥–å…ˆé‡Œæœ‰æ²¡æœ‰ Cindy desktop dev è¿›ç¨‹ã€‚
+// ç”¨é€”ï¼šæ‹¦ä½"agent è·‘åœ¨ã€å½“å‰ checkoutã€‘çš„ desktop dev é‡Œè¿˜è°ƒ restart"è¿™ç§è‡ªæ€åœºæ™¯â€”â€”
+// kill ä½œç”¨åŸŸè™½å·²é™æœ¬ checkoutï¼Œä½†ç¥–å…ˆå°±æ˜¯è¿™ä»½ checkout æ—¶ä»ä¼šæŠŠæœ¬è„šæœ¬ä¸€èµ·æ”¶æŽ‰ã€‚
+// å®¿ä¸»æ˜¯æ­£å¼ç‰ˆæˆ–å¦ä¸€ä¸ª worktree æ—¶ä¸æ‹¦ï¼šæ€ä¸åˆ°é‚£ä»½ç¥–å…ˆï¼Œéš”ç¦»å¯åŠ¨å¯ä»¥ç»§ç»­ã€‚
 function findDevAncestor() {
   const processes = scanRestartProcessTable();
   const byPid = new Map(processes.map((proc) => [proc.pid, proc]));
@@ -508,10 +508,10 @@ function shellSingleQuote(value) {
   return `'${value.replaceAll("'", "'\\''")}'`;
 }
 
-// Terminal 的 `do script` 把命令当键盘输入送进新标签页的 tty;新窗口的 shell 还没接管
-// 输入时 tty 处于 canonical 模式,单行超过 MAX_CANON(1024 字节)会被截断,整条命令
-// 静默不执行(worktree 路径长、需清除的环境变量多时实测 ~1600 字节)。完整命令先写进
-// 临时脚本,Terminal 只收一条短的 source 命令;脚本第一行删掉自身,不留残留文件。
+// Terminal çš„ `do script` æŠŠå‘½ä»¤å½“é”®ç›˜è¾“å…¥é€è¿›æ–°æ ‡ç­¾é¡µçš„ tty;æ–°çª—å£çš„ shell è¿˜æ²¡æŽ¥ç®¡
+// è¾“å…¥æ—¶ tty å¤„äºŽ canonical æ¨¡å¼,å•è¡Œè¶…è¿‡ MAX_CANON(1024 å­—èŠ‚)ä¼šè¢«æˆªæ–­,æ•´æ¡å‘½ä»¤
+// é™é»˜ä¸æ‰§è¡Œ(worktree è·¯å¾„é•¿ã€éœ€æ¸…é™¤çš„çŽ¯å¢ƒå˜é‡å¤šæ—¶å®žæµ‹ ~1600 å­—èŠ‚)ã€‚å®Œæ•´å‘½ä»¤å…ˆå†™è¿›
+// ä¸´æ—¶è„šæœ¬,Terminal åªæ”¶ä¸€æ¡çŸ­çš„ source å‘½ä»¤;è„šæœ¬ç¬¬ä¸€è¡Œåˆ æŽ‰è‡ªèº«,ä¸ç•™æ®‹ç•™æ–‡ä»¶ã€‚
 export function writeDarwinTerminalLaunchScript(command, dir = os.tmpdir()) {
   const scriptPath = path.join(dir, `cindy-desktop-dev-${randomBytes(6).toString('hex')}.sh`);
   fs.writeFileSync(scriptPath, `rm -f -- ${shellSingleQuote(scriptPath)}\n${command}\n`, {
@@ -532,18 +532,18 @@ export function prepareDarwinTerminalLaunch(command, dir = os.tmpdir()) {
   };
 }
 
-// 足够覆盖启动全过程（实测一次冷启动约 0.6MB）；main/agent 日志另有按天轮转的文件。
+// è¶³å¤Ÿè¦†ç›–å¯åŠ¨å…¨è¿‡ç¨‹ï¼ˆå®žæµ‹ä¸€æ¬¡å†·å¯åŠ¨çº¦ 0.6MBï¼‰ï¼›main/agent æ—¥å¿—å¦æœ‰æŒ‰å¤©è½®è½¬çš„æ–‡ä»¶ã€‚
 export const DEV_TERMINAL_LOG_MAX_BYTES = 8 * 1024 * 1024;
 
 export function desktopDevTerminalLogPath(root = rootDir) {
   return path.join(root, 'apps', 'desktop', 'logs', 'dev-terminal.log');
 }
 
-// Agent 没有 TTY 时 dev 跑在新开的 Terminal 标签页里，进程退出后标签页随之关闭，
-// 失败原因就看不到了。script(1) 继续给子进程一个 pty（electron-forge 依赖 TTY），
-// 输出经命名管道只把前 maxBytes 写进日志、其余丢弃：dev 会把 trace 级日志镜像到
-// 终端，长期运行的实例不能让这份文件无限增长。每次启动覆盖，退出码与子进程一致。
-// 返回一个 `{ ...; }` 命令组，可以整体接在 `cd … &&` 后面；envPrefix 只作用于 script。
+// Agent æ²¡æœ‰ TTY æ—¶ dev è·‘åœ¨æ–°å¼€çš„ Terminal æ ‡ç­¾é¡µé‡Œï¼Œè¿›ç¨‹é€€å‡ºåŽæ ‡ç­¾é¡µéšä¹‹å…³é—­ï¼Œ
+// å¤±è´¥åŽŸå› å°±çœ‹ä¸åˆ°äº†ã€‚script(1) ç»§ç»­ç»™å­è¿›ç¨‹ä¸€ä¸ª ptyï¼ˆelectron-forge ä¾èµ– TTYï¼‰ï¼Œ
+// è¾“å‡ºç»å‘½åç®¡é“åªæŠŠå‰ maxBytes å†™è¿›æ—¥å¿—ã€å…¶ä½™ä¸¢å¼ƒï¼šdev ä¼šæŠŠ trace çº§æ—¥å¿—é•œåƒåˆ°
+// ç»ˆç«¯ï¼Œé•¿æœŸè¿è¡Œçš„å®žä¾‹ä¸èƒ½è®©è¿™ä»½æ–‡ä»¶æ— é™å¢žé•¿ã€‚æ¯æ¬¡å¯åŠ¨è¦†ç›–ï¼Œé€€å‡ºç ä¸Žå­è¿›ç¨‹ä¸€è‡´ã€‚
+// è¿”å›žä¸€ä¸ª `{ ...; }` å‘½ä»¤ç»„ï¼Œå¯ä»¥æ•´ä½“æŽ¥åœ¨ `cd â€¦ &&` åŽé¢ï¼›envPrefix åªä½œç”¨äºŽ scriptã€‚
 export function darwinTerminalLoggedCommand(
   command,
   logPath,
@@ -566,7 +566,7 @@ export function readDesktopDevLogTail(logPath, maxLines = 40) {
     return [];
   }
   const lines = text
-    // ANSI 转义、script(1) 写入的 ^D／退格等控制字符都去掉，只保留可读文本。
+    // ANSI è½¬ä¹‰ã€script(1) å†™å…¥çš„ ^Dï¼é€€æ ¼ç­‰æŽ§åˆ¶å­—ç¬¦éƒ½åŽ»æŽ‰ï¼Œåªä¿ç•™å¯è¯»æ–‡æœ¬ã€‚
     .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
     .replace(/\x1b\][^\x07]*\x07/g, '')
     .split(/\r?\n/)
@@ -609,11 +609,11 @@ function closeDarwinTerminalTtys(ttys) {
 }
 
 /**
- * --isolated 的默认独立 userData 目录:与当前区域正式目录平级、名字带 -dev2 后缀,
- * 稳定不随 checkout 变(多个 worktree 共享同一个 dev 沙箱,想再细分用命名沙箱
- * `--isolated=<名字>` 或自己设 XDT_USER_DATA_DIR 覆盖)。命名沙箱目录再追加
- * `-<名字>` 后缀,每个名字一条完全独立的沙箱。只在 dev 生效——主进程入口只在
- * 非 packaged 时应用该覆写。
+ * --isolated çš„é»˜è®¤ç‹¬ç«‹ userData ç›®å½•:ä¸Žå½“å‰åŒºåŸŸæ­£å¼ç›®å½•å¹³çº§ã€åå­—å¸¦ -dev2 åŽç¼€,
+ * ç¨³å®šä¸éš checkout å˜(å¤šä¸ª worktree å…±äº«åŒä¸€ä¸ª dev æ²™ç®±,æƒ³å†ç»†åˆ†ç”¨å‘½åæ²™ç®±
+ * `--isolated=<åå­—>` æˆ–è‡ªå·±è®¾ XDT_USER_DATA_DIR è¦†ç›–)ã€‚å‘½åæ²™ç®±ç›®å½•å†è¿½åŠ 
+ * `-<åå­—>` åŽç¼€,æ¯ä¸ªåå­—ä¸€æ¡å®Œå…¨ç‹¬ç«‹çš„æ²™ç®±ã€‚åªåœ¨ dev ç”Ÿæ•ˆâ€”â€”ä¸»è¿›ç¨‹å…¥å£åªåœ¨
+ * éž packaged æ—¶åº”ç”¨è¯¥è¦†å†™ã€‚
  */
 function userDataDirNamed(dirName) {
   if (process.platform === 'win32') {
@@ -636,7 +636,7 @@ export function officialProductionUserDataDirs() {
   return DESKTOP_DEV_REGIONS.map((region) => productionUserDataDir(region));
 }
 
-/** 与 devCliFlags ISOLATION_NAME_RE 一致：非法名字回落默认沙箱，不把路径段写进目录。 */
+/** ä¸Ž devCliFlags ISOLATION_NAME_RE ä¸€è‡´ï¼šéžæ³•åå­—å›žè½é»˜è®¤æ²™ç®±ï¼Œä¸æŠŠè·¯å¾„æ®µå†™è¿›ç›®å½•ã€‚ */
 export const ISOLATION_NAME_RE = /^[A-Za-z0-9_-]{1,32}$/;
 
 export function sanitizeIsolationName(raw) {
@@ -700,7 +700,7 @@ export function canonicalizeUserDataDir(dir) {
     const real = fs.realpathSync.native(resolved);
     return volumeIsCaseInsensitive(real) ? real.toLowerCase() : real;
   } catch {
-    // 叶子还不存在:沿最近存在祖先做 realpath,再按该卷语义接回剩余段。
+    // å¶å­è¿˜ä¸å­˜åœ¨:æ²¿æœ€è¿‘å­˜åœ¨ç¥–å…ˆåš realpath,å†æŒ‰è¯¥å·è¯­ä¹‰æŽ¥å›žå‰©ä½™æ®µã€‚
   }
   let current = resolved;
   const suffix = [];
@@ -714,7 +714,7 @@ export function canonicalizeUserDataDir(dir) {
       const joined = path.join(ancestorReal, ...suffix);
       return volumeIsCaseInsensitive(ancestorReal) ? joined.toLowerCase() : joined;
     } catch {
-      // 继续上溯
+      // ç»§ç»­ä¸Šæº¯
     }
   }
 }
@@ -851,13 +851,13 @@ export function hostedRestartRefusal(ancestor, { ownRootDir, checkoutPaths = [] 
 }
 
 export function defaultIsolatedUserDataDir(isolationName, region = 'global') {
-  // 目录纪元 v2(-dev2),与 devCliFlags.ts 的派生保持一字不差:#871 起隔离沙箱用
-  // CindyDev 钥匙串身份,旧 -dev 目录留给旧 checkout(#912 review)。
+  // ç›®å½•çºªå…ƒ v2(-dev2),ä¸Ž devCliFlags.ts çš„æ´¾ç”Ÿä¿æŒä¸€å­—ä¸å·®:#871 èµ·éš”ç¦»æ²™ç®±ç”¨
+  // CindyDev é’¥åŒ™ä¸²èº«ä»½,æ—§ -dev ç›®å½•ç•™ç»™æ—§ checkout(#912 review)ã€‚
   const baseName = desktopUserDataDirNameForRegion(region);
   return userDataDirNamed(`${baseName}-dev2${isolationName ? `-${isolationName}` : ''}`);
 }
 
-/** 非隔离 dev 与正式版共用的 userData 目录。 */
+/** éžéš”ç¦» dev ä¸Žæ­£å¼ç‰ˆå…±ç”¨çš„ userData ç›®å½•ã€‚ */
 export function productionUserDataDir(region = 'global') {
   return userDataDirNamed(desktopUserDataDirNameForRegion(region));
 }
@@ -872,8 +872,8 @@ function isProcessAlive(pid) {
 }
 
 /**
- * --preserve-running 只有在目标 profile 的所有存活实例都明确声明同一区域时
- * 才能共享。旧记录没有 region，属于无法证明兼容，必须 fail closed。
+ * --preserve-running åªæœ‰åœ¨ç›®æ ‡ profile çš„æ‰€æœ‰å­˜æ´»å®žä¾‹éƒ½æ˜Žç¡®å£°æ˜ŽåŒä¸€åŒºåŸŸæ—¶
+ * æ‰èƒ½å…±äº«ã€‚æ—§è®°å½•æ²¡æœ‰ regionï¼Œå±žäºŽæ— æ³•è¯æ˜Žå…¼å®¹ï¼Œå¿…é¡» fail closedã€‚
  */
 export function inspectSharedUserDataRegion(userDataDir, expectedRegion, processes = []) {
   const recordsDir = path.join(userDataDir, '.dev-instances');
@@ -885,11 +885,11 @@ export function inspectSharedUserDataRegion(userDataDir, expectedRegion, process
         const record = JSON.parse(fs.readFileSync(path.join(recordsDir, name), 'utf8'));
         if (Number.isInteger(record?.pid) && isProcessAlive(record.pid)) liveRecords.push(record);
       } catch {
-        // 损坏记录不能证明兼容；若确有 helper 占用，下面的 process guard 会拒绝。
+        // æŸåè®°å½•ä¸èƒ½è¯æ˜Žå…¼å®¹ï¼›è‹¥ç¡®æœ‰ helper å ç”¨ï¼Œä¸‹é¢çš„ process guard ä¼šæ‹’ç»ã€‚
       }
     }
   } catch {
-    // 没有注册表时继续看进程扫描。
+    // æ²¡æœ‰æ³¨å†Œè¡¨æ—¶ç»§ç»­çœ‹è¿›ç¨‹æ‰«æã€‚
   }
 
   const incompatibleRecords = liveRecords.filter(
@@ -950,9 +950,9 @@ function darwinEnvPrefix() {
     pnpmExecPath ? path.dirname(pnpmExecPath) : null,
     path.dirname(process.execPath),
   ].filter(Boolean);
-  // corepack shims 只能放在 "$PATH" 之后兜底:它的 pnpm 版本由 corepack 自己决定,
-  // 排在用户 PATH 前面会盖掉用户自己装好的 pnpm(proto / homebrew 等),
-  // corepack 默认版本漂到 pnpm 11 后就会撞本仓 engines 上限炸掉 dev 启动。
+  // corepack shims åªèƒ½æ”¾åœ¨ "$PATH" ä¹‹åŽå…œåº•:å®ƒçš„ pnpm ç‰ˆæœ¬ç”± corepack è‡ªå·±å†³å®š,
+  // æŽ’åœ¨ç”¨æˆ· PATH å‰é¢ä¼šç›–æŽ‰ç”¨æˆ·è‡ªå·±è£…å¥½çš„ pnpm(proto / homebrew ç­‰),
+  // corepack é»˜è®¤ç‰ˆæœ¬æ¼‚åˆ° pnpm 11 åŽå°±ä¼šæ’žæœ¬ä»“ engines ä¸Šé™ç‚¸æŽ‰ dev å¯åŠ¨ã€‚
   const fallbackPathParts = [
     ...(fs.existsSync(corepackShimDir) ? [corepackShimDir] : []),
     '/opt/homebrew/bin',
@@ -968,23 +968,23 @@ function darwinEnvPrefix() {
 }
 
 /**
- * 启动器转发给 dev 进程的全部环境变量(含未设值项)。devEnvPrefix 只转发有值的项;
- * macOS 走长驻的 Terminal.app 时,未设值项还必须由 darwinStaleDevEnvUnset 显式清掉 ——
- * 否则 Terminal 进程里残留的更早一次启动的值(XDT_ISOLATED / XDT_USER_DATA_DIR /
- * XDT_USER_DATA_DIR_EPOCH 等)会被 dev 进程继承,`--shared` / `--preserve-running`
- * 预览悄悄落进别的 worktree 的沙箱,甚至用错钥匙串身份打开 profile。
- * 不变量:Terminal 命令里这些变量的取值 == 本次启动器的取值。
+ * å¯åŠ¨å™¨è½¬å‘ç»™ dev è¿›ç¨‹çš„å…¨éƒ¨çŽ¯å¢ƒå˜é‡(å«æœªè®¾å€¼é¡¹)ã€‚devEnvPrefix åªè½¬å‘æœ‰å€¼çš„é¡¹;
+ * macOS èµ°é•¿é©»çš„ Terminal.app æ—¶,æœªè®¾å€¼é¡¹è¿˜å¿…é¡»ç”± darwinStaleDevEnvUnset æ˜¾å¼æ¸…æŽ‰ â€”â€”
+ * å¦åˆ™ Terminal è¿›ç¨‹é‡Œæ®‹ç•™çš„æ›´æ—©ä¸€æ¬¡å¯åŠ¨çš„å€¼(XDT_ISOLATED / XDT_USER_DATA_DIR /
+ * XDT_USER_DATA_DIR_EPOCH ç­‰)ä¼šè¢« dev è¿›ç¨‹ç»§æ‰¿,`--shared` / `--preserve-running`
+ * é¢„è§ˆæ‚„æ‚„è½è¿›åˆ«çš„ worktree çš„æ²™ç®±,ç”šè‡³ç”¨é”™é’¥åŒ™ä¸²èº«ä»½æ‰“å¼€ profileã€‚
+ * ä¸å˜é‡:Terminal å‘½ä»¤é‡Œè¿™äº›å˜é‡çš„å–å€¼ == æœ¬æ¬¡å¯åŠ¨å™¨çš„å–å€¼ã€‚
  */
 function devEnvEntries(env) {
   return [
-    // --region 经 CINDY_AUTH_REGION 注入 dev-remote-env / Forge / Vite，同一个值
-    // 同时决定区域身份与 --endpoints-cdn 的自举 CDN 基址。
+    // --region ç» CINDY_AUTH_REGION æ³¨å…¥ dev-remote-env / Forge / Viteï¼ŒåŒä¸€ä¸ªå€¼
+    // åŒæ—¶å†³å®šåŒºåŸŸèº«ä»½ä¸Ž --endpoints-cdn çš„è‡ªä¸¾ CDN åŸºå€ã€‚
     ['CINDY_AUTH_REGION', env.CINDY_AUTH_REGION],
     ['XDT_VOICE_INPUT_RECORD', env.XDT_VOICE_INPUT_RECORD],
-    // 登录 scenario harness(dev-only 状态遍历,implementation-plan Step 0):
-    // XDT_LOGIN_SCENARIO 由 authManager 消费(附录 A 值域);
-    // VITE_SPLASH_PHASE_FIXTURE 由 renderer useSplash fixture 读取点消费
-    // (Vite 会把进程级 VITE_* 暴露进 import.meta.env,dev-only)。
+    // ç™»å½• scenario harness(dev-only çŠ¶æ€éåŽ†,implementation-plan Step 0):
+    // XDT_LOGIN_SCENARIO ç”± authManager æ¶ˆè´¹(é™„å½• A å€¼åŸŸ);
+    // VITE_SPLASH_PHASE_FIXTURE ç”± renderer useSplash fixture è¯»å–ç‚¹æ¶ˆè´¹
+    // (Vite ä¼šæŠŠè¿›ç¨‹çº§ VITE_* æš´éœ²è¿› import.meta.env,dev-only)ã€‚
     ['XDT_LOGIN_SCENARIO', env.XDT_LOGIN_SCENARIO],
     ['VITE_SPLASH_PHASE_FIXTURE', env.VITE_SPLASH_PHASE_FIXTURE],
     ['XDT_USER_DATA_DIR', env.XDT_USER_DATA_DIR],
@@ -993,50 +993,50 @@ function devEnvEntries(env) {
     ['XDT_SCHEDULER_PASSIVE', env.XDT_SCHEDULER_PASSIVE],
     ['XDT_ISOLATED', env.XDT_ISOLATED],
     ['XDT_ISOLATED_NAME', env.XDT_ISOLATED_NAME],
-    // --mock 的 UI 模拟数据开关(main/index.ts 只在隔离沙箱里认)。
+    // --mock çš„ UI æ¨¡æ‹Ÿæ•°æ®å¼€å…³(main/index.ts åªåœ¨éš”ç¦»æ²™ç®±é‡Œè®¤)ã€‚
     ['XDT_UI_MOCK', env.XDT_UI_MOCK],
-    // Cindy Make 测试窗口标记必须穿过 restart → dev-env → Forge，
-    // 否则测试进程会退化成普通开发窗口（数据虽隔离，关闭／前台行为却不再是测试版）。
+    // Cindy Make æµ‹è¯•çª—å£æ ‡è®°å¿…é¡»ç©¿è¿‡ restart â†’ dev-env â†’ Forgeï¼Œ
+    // å¦åˆ™æµ‹è¯•è¿›ç¨‹ä¼šé€€åŒ–æˆæ™®é€šå¼€å‘çª—å£ï¼ˆæ•°æ®è™½éš”ç¦»ï¼Œå…³é—­ï¼å‰å°è¡Œä¸ºå´ä¸å†æ˜¯æµ‹è¯•ç‰ˆï¼‰ã€‚
     ['XDT_CINDY_MAKE_TEST', env.XDT_CINDY_MAKE_TEST],
-    // 沙箱凭证隔离(--isolated-auth):不与 ~/.codex 共享 auth 硬链,auth-adapters 消费。
+    // æ²™ç®±å‡­è¯éš”ç¦»(--isolated-auth):ä¸ä¸Ž ~/.codex å…±äº« auth ç¡¬é“¾,auth-adapters æ¶ˆè´¹ã€‚
     ['XDT_ISOLATED_AUTH', env.XDT_ISOLATED_AUTH],
     ['XDT_ALLOW_DEV_OAUTH_WRITE', env.XDT_ALLOW_DEV_OAUTH_WRITE],
     ['XDT_ISOLATED_AUTH_PROOF', env.XDT_ISOLATED_AUTH_PROOF],
-    // CDP 端口覆写(bootstrap-electron 消费): 并行多开沙箱时给后起实例换端口。
+    // CDP ç«¯å£è¦†å†™(bootstrap-electron æ¶ˆè´¹): å¹¶è¡Œå¤šå¼€æ²™ç®±æ—¶ç»™åŽèµ·å®žä¾‹æ¢ç«¯å£ã€‚
     ['XDT_CDP_PORT', env.XDT_CDP_PORT],
     // A long-lived Terminal can retain a previous smoke run's environment.
     // Override its value even when this invocation did not request the smoke.
     ['CINDY_CUA_SMOKE', ['1', 'cursor-goal'].includes(env.CINDY_CUA_SMOKE) ? env.CINDY_CUA_SMOKE : '0'],
-    // 一次性 Grok wire 归因探针(dev-only;正常环境不设置,不产生额外日志)。
+    // ä¸€æ¬¡æ€§ Grok wire å½’å› æŽ¢é’ˆ(dev-only;æ­£å¸¸çŽ¯å¢ƒä¸è®¾ç½®,ä¸äº§ç”Ÿé¢å¤–æ—¥å¿—)ã€‚
     ['XDT_WIRE_DIAGNOSTICS', env.XDT_WIRE_DIAGNOSTICS],
-    // 一次性 Grok strict tool spike(dev-only;必须与 wire probe 一起显式开启)。
+    // ä¸€æ¬¡æ€§ Grok strict tool spike(dev-only;å¿…é¡»ä¸Ž wire probe ä¸€èµ·æ˜¾å¼å¼€å¯)ã€‚
     ['XDT_WIRE_DIAGNOSTICS_STRICT', env.XDT_WIRE_DIAGNOSTICS_STRICT],
     ['CINDY_REMOTE_CREDENTIALS_SIGNING_IDENTITY', env.CINDY_REMOTE_CREDENTIALS_SIGNING_IDENTITY],
     ['XDT_TAPDB_DEV', env.XDT_TAPDB_DEV],
-    // 端点清单来源覆写:--endpoints-cdn(dev 走线上 CDN)/ local 模式的
-    // endpoint.local.json 文件路径,均由主进程 clientEndpointsService 消费。
+    // ç«¯ç‚¹æ¸…å•æ¥æºè¦†å†™:--endpoints-cdn(dev èµ°çº¿ä¸Š CDN)/ local æ¨¡å¼çš„
+    // endpoint.local.json æ–‡ä»¶è·¯å¾„,å‡ç”±ä¸»è¿›ç¨‹ clientEndpointsService æ¶ˆè´¹ã€‚
     ['XDT_ENDPOINTS_CDN', env.XDT_ENDPOINTS_CDN],
     ['XDT_ENDPOINT_MANIFEST_FILE', env.XDT_ENDPOINT_MANIFEST_FILE],
     // Partial local relay testing preserves the normal authentication realm discovery.
     ['XDT_DEVICE_LINK_LOCAL_URL', env.XDT_DEVICE_LINK_LOCAL_URL],
     ['XDT_DEVICE_LINK_CN_LOCAL_URL', env.XDT_DEVICE_LINK_CN_LOCAL_URL],
     ['XDT_DEVICE_LINK_GLOBAL_LOCAL_URL', env.XDT_DEVICE_LINK_GLOBAL_LOCAL_URL],
-    // 模型目录闭环调试覆写。dev 默认仍不联网；只有显式给 URL 时，主进程才允许
-    // 从该地址拉取 Catalog。PATH / DISABLE 同步透传，避免 runner 吞掉已有契约。
+    // æ¨¡åž‹ç›®å½•é—­çŽ¯è°ƒè¯•è¦†å†™ã€‚dev é»˜è®¤ä»ä¸è”ç½‘ï¼›åªæœ‰æ˜¾å¼ç»™ URL æ—¶ï¼Œä¸»è¿›ç¨‹æ‰å…è®¸
+    // ä»Žè¯¥åœ°å€æ‹‰å– Catalogã€‚PATH / DISABLE åŒæ­¥é€ä¼ ï¼Œé¿å… runner åžæŽ‰å·²æœ‰å¥‘çº¦ã€‚
     ['XDT_MODELS_URL', env.XDT_MODELS_URL],
     ['XDT_MODELS_PATH', env.XDT_MODELS_PATH],
     ['XDT_DISABLE_MODELS_FETCH', env.XDT_DISABLE_MODELS_FETCH],
-    // 启动即自动打开 DevTools(main 的 ready-to-show 里消费;见 bootstrap-electron)。
-    // 给"快捷键/菜单打不开 DevTools"的环境兜底,QA 控制台验证依赖它。
+    // å¯åŠ¨å³è‡ªåŠ¨æ‰“å¼€ DevTools(main çš„ ready-to-show é‡Œæ¶ˆè´¹;è§ bootstrap-electron)ã€‚
+    // ç»™"å¿«æ·é”®/èœå•æ‰“ä¸å¼€ DevTools"çš„çŽ¯å¢ƒå…œåº•,QA æŽ§åˆ¶å°éªŒè¯ä¾èµ–å®ƒã€‚
     ['OPEN_DEVTOOLS', env.OPEN_DEVTOOLS],
-    // --wait-ready 的一次性状态文件：runner 写失败，Electron main ready-to-show 写成功。
+    // --wait-ready çš„ä¸€æ¬¡æ€§çŠ¶æ€æ–‡ä»¶ï¼šrunner å†™å¤±è´¥ï¼ŒElectron main ready-to-show å†™æˆåŠŸã€‚
     ['XDT_DESKTOP_DEV_STARTUP_STATUS_FILE', env.XDT_DESKTOP_DEV_STARTUP_STATUS_FILE],
-    // 插件存储启动边界的 dev 黑盒验收：仅显式临时结果路径时启用。
+    // æ’ä»¶å­˜å‚¨å¯åŠ¨è¾¹ç•Œçš„ dev é»‘ç›’éªŒæ”¶ï¼šä»…æ˜¾å¼ä¸´æ—¶ç»“æžœè·¯å¾„æ—¶å¯ç”¨ã€‚
     ['XDT_PLUGIN_STORAGE_SMOKE_RESULT_FILE', env.XDT_PLUGIN_STORAGE_SMOKE_RESULT_FILE],
   ];
 }
 
-/** macOS Terminal 命令前缀:清掉本次未设值、但可能残留在 Terminal 进程里的转发变量。 */
+/** macOS Terminal å‘½ä»¤å‰ç¼€:æ¸…æŽ‰æœ¬æ¬¡æœªè®¾å€¼ã€ä½†å¯èƒ½æ®‹ç•™åœ¨ Terminal è¿›ç¨‹é‡Œçš„è½¬å‘å˜é‡ã€‚ */
 export function darwinStaleDevEnvUnset(env = process.env) {
   const keys = devEnvEntries(env)
     .filter(([, value]) => !value)
@@ -1084,13 +1084,13 @@ function launchInSystemTerminal(mode) {
     fs.rmSync(`${logPath}.fifo`, { force: true });
     const command = `${darwinEnvPrefix()}${darwinStaleDevEnvUnset()}cd ${shellSingleQuote(rootDir)} && ${darwinTerminalLoggedCommand(packageManagerCommand(mode), logPath, { envPrefix: devEnvPrefix() })}; exitCode=$?; exit $exitCode`;
     const { scriptPath, args } = prepareDarwinTerminalLaunch(command);
-    // osascript 在 do script 之前失败（自动化权限被拒、脚本错误）时临时脚本不会被 source，
-    // 首行自删不会发生；按失败退出尽力删除，避免留下含开发环境变量的文件。
+    // osascript åœ¨ do script ä¹‹å‰å¤±è´¥ï¼ˆè‡ªåŠ¨åŒ–æƒé™è¢«æ‹’ã€è„šæœ¬é”™è¯¯ï¼‰æ—¶ä¸´æ—¶è„šæœ¬ä¸ä¼šè¢« sourceï¼Œ
+    // é¦–è¡Œè‡ªåˆ ä¸ä¼šå‘ç”Ÿï¼›æŒ‰å¤±è´¥é€€å‡ºå°½åŠ›åˆ é™¤ï¼Œé¿å…ç•™ä¸‹å«å¼€å‘çŽ¯å¢ƒå˜é‡çš„æ–‡ä»¶ã€‚
     const removeScript = () => {
       try {
         fs.rmSync(scriptPath, { force: true });
       } catch {
-        // 尽力清理，失败不影响启动结果判断。
+        // å°½åŠ›æ¸…ç†ï¼Œå¤±è´¥ä¸å½±å“å¯åŠ¨ç»“æžœåˆ¤æ–­ã€‚
       }
     };
     const child = spawn('osascript', args, {
@@ -1261,7 +1261,7 @@ async function main() {
   const replaceRunningRoot = replaceRunningArg
     ? path.resolve(replaceRunningArg.slice('--replace-running-root='.length))
     : null;
-  // --local 切换到本地模式(连 localhost:3333);缺省走 remote(连 xdt-api)。
+  // --local åˆ‡æ¢åˆ°æœ¬åœ°æ¨¡å¼(è¿ž localhost:3333);ç¼ºçœèµ° remote(è¿ž xdt-api)ã€‚
   const mode = argv.includes('--local') ? 'local' : 'remote';
   const startupConfig = applyDesktopStartupConfigForPhase({ argv, mode });
   const selectedRegion = startupConfig?.region ?? resolveDesktopDevRegion(argv, process.env);
@@ -1327,10 +1327,10 @@ async function main() {
   if (startupConfig) {
     console.log(`==> Desktop region: ${startupConfig.region}`);
   }
-  // --passive: 定时任务被动模式 —— 本实例不参与自动触发(交给同机 primary,
-  // 典型场景多个 dev preview 与 release/primary 共享数据时 preview 让位)。
-  // 实现方式是置 XDT_SCHEDULER_PASSIVE=1,经 devEnvPrefix 白名单透传进新开的
-  // 系统终端 / 直接 spawn 的 dev 进程。
+  // --passive: å®šæ—¶ä»»åŠ¡è¢«åŠ¨æ¨¡å¼ â€”â€” æœ¬å®žä¾‹ä¸å‚ä¸Žè‡ªåŠ¨è§¦å‘(äº¤ç»™åŒæœº primary,
+  // å…¸åž‹åœºæ™¯å¤šä¸ª dev preview ä¸Ž release/primary å…±äº«æ•°æ®æ—¶ preview è®©ä½)ã€‚
+  // å®žçŽ°æ–¹å¼æ˜¯ç½® XDT_SCHEDULER_PASSIVE=1,ç» devEnvPrefix ç™½åå•é€ä¼ è¿›æ–°å¼€çš„
+  // ç³»ç»Ÿç»ˆç«¯ / ç›´æŽ¥ spawn çš„ dev è¿›ç¨‹ã€‚
   if (startupConfig && (argv.includes('--passive') || preserveRunning)) {
     process.env.XDT_SCHEDULER_PASSIVE = '1';
     console.log(
@@ -1339,27 +1339,27 @@ async function main() {
         : '==> Scheduler passive mode: this instance will not auto-fire schedules.',
     );
   }
-  // --endpoints-cdn: dev 不读仓内 config/endpoint.json,改走与 packaged 相同的
-  // 线上 CDN 端点清单拉取链路(测线上清单)。实现方式是置 XDT_ENDPOINTS_CDN=1,
-  // 经 devEnvPrefix 白名单透传,主进程 devCliFlags/clientEndpointsService 消费。
-  // 注意 local 模式的 endpoint.local.json 生成不在本脚本——dev(local)脚本链里的
-  // apps/desktop/scripts/dev-local-env.mjs 统一负责(human 直跑与 restart 同路径)。
+  // --endpoints-cdn: dev ä¸è¯»ä»“å†… config/endpoint.json,æ”¹èµ°ä¸Ž packaged ç›¸åŒçš„
+  // çº¿ä¸Š CDN ç«¯ç‚¹æ¸…å•æ‹‰å–é“¾è·¯(æµ‹çº¿ä¸Šæ¸…å•)ã€‚å®žçŽ°æ–¹å¼æ˜¯ç½® XDT_ENDPOINTS_CDN=1,
+  // ç» devEnvPrefix ç™½åå•é€ä¼ ,ä¸»è¿›ç¨‹ devCliFlags/clientEndpointsService æ¶ˆè´¹ã€‚
+  // æ³¨æ„ local æ¨¡å¼çš„ endpoint.local.json ç”Ÿæˆä¸åœ¨æœ¬è„šæœ¬â€”â€”dev(local)è„šæœ¬é“¾é‡Œçš„
+  // apps/desktop/scripts/dev-local-env.mjs ç»Ÿä¸€è´Ÿè´£(human ç›´è·‘ä¸Ž restart åŒè·¯å¾„)ã€‚
   if (startupConfig?.endpointsCdn) {
     console.log(`==> Endpoints via CDN: dev will fetch the ${startupConfig.region} online endpoint manifest.`);
   } else if (startupConfig && mode === 'remote' && startupConfig.endpointManifestFile) {
     console.log(`==> Endpoint manifest: ${startupConfig.endpointManifestFile}`);
   }
-  // --isolated[=<名字>]: dev 使用独立的 userData 目录(数据库/登录态/会话全部与
-  // 正式版隔离,首次要重新登录 Cindy 账号)。不带名字 = 当前区域默认沙箱;
-  // 带名字 = 在区域沙箱名后追加 `-<名字>`,每个名字一条,可同时多开。
-  // 实现:置 XDT_USER_DATA_DIR(主进程入口只在非 packaged 时应用,见
-  // apps/desktop/src/main/index.ts),经 devEnvPrefix 白名单透传给 dev 进程。
-  // 已手动设了 XDT_USER_DATA_DIR 时尊重用户的值,不覆盖。
-  // 同时置 XDT_ISOLATED=1(开关)+ XDT_ISOLATED_NAME(名字,可选)把隔离意图带进
-  // 主进程——开关与名字分离,名叫 "1" 的沙箱不会撞开关标记值(codex review P2)。
-  // 主进程据此派生独立 deviceId(dev-[<名字>-]<机器指纹>,机器指纹只有主进程能取)
-  // ——服务端登录凭证按 (user, device) 一对一存,不派生的话沙箱登录会覆盖正式版
-  // 的续期凭证,同机互踢。
+  // --isolated[=<åå­—>]: dev ä½¿ç”¨ç‹¬ç«‹çš„ userData ç›®å½•(æ•°æ®åº“/ç™»å½•æ€/ä¼šè¯å…¨éƒ¨ä¸Ž
+  // æ­£å¼ç‰ˆéš”ç¦»,é¦–æ¬¡è¦é‡æ–°ç™»å½• Cindy è´¦å·)ã€‚ä¸å¸¦åå­— = å½“å‰åŒºåŸŸé»˜è®¤æ²™ç®±;
+  // å¸¦åå­— = åœ¨åŒºåŸŸæ²™ç®±ååŽè¿½åŠ  `-<åå­—>`,æ¯ä¸ªåå­—ä¸€æ¡,å¯åŒæ—¶å¤šå¼€ã€‚
+  // å®žçŽ°:ç½® XDT_USER_DATA_DIR(ä¸»è¿›ç¨‹å…¥å£åªåœ¨éž packaged æ—¶åº”ç”¨,è§
+  // apps/desktop/src/main/index.ts),ç» devEnvPrefix ç™½åå•é€ä¼ ç»™ dev è¿›ç¨‹ã€‚
+  // å·²æ‰‹åŠ¨è®¾äº† XDT_USER_DATA_DIR æ—¶å°Šé‡ç”¨æˆ·çš„å€¼,ä¸è¦†ç›–ã€‚
+  // åŒæ—¶ç½® XDT_ISOLATED=1(å¼€å…³)+ XDT_ISOLATED_NAME(åå­—,å¯é€‰)æŠŠéš”ç¦»æ„å›¾å¸¦è¿›
+  // ä¸»è¿›ç¨‹â€”â€”å¼€å…³ä¸Žåå­—åˆ†ç¦»,åå« "1" çš„æ²™ç®±ä¸ä¼šæ’žå¼€å…³æ ‡è®°å€¼(codex review P2)ã€‚
+  // ä¸»è¿›ç¨‹æ®æ­¤æ´¾ç”Ÿç‹¬ç«‹ deviceId(dev-[<åå­—>-]<æœºå™¨æŒ‡çº¹>,æœºå™¨æŒ‡çº¹åªæœ‰ä¸»è¿›ç¨‹èƒ½å–)
+  // â€”â€”æœåŠ¡ç«¯ç™»å½•å‡­è¯æŒ‰ (user, device) ä¸€å¯¹ä¸€å­˜,ä¸æ´¾ç”Ÿçš„è¯æ²™ç®±ç™»å½•ä¼šè¦†ç›–æ­£å¼ç‰ˆ
+  // çš„ç»­æœŸå‡­è¯,åŒæœºäº’è¸¢ã€‚
   if (startupConfig && isolatedArg) {
     if (isolationName && !/^[A-Za-z0-9_-]{1,32}$/.test(isolationName)) {
       exitWithFailure(
@@ -1375,25 +1375,25 @@ async function main() {
     if (isolationName) process.env.XDT_ISOLATED_NAME = isolationName;
     if (!process.env.XDT_USER_DATA_DIR) {
       process.env.XDT_USER_DATA_DIR = defaultIsolatedUserDataDir(isolationName, selectedRegion);
-      // 可信纪元信号:仅当目录由本脚本按 -dev2 纪元派生时携带,主进程据此允许
-      // 显式 env 覆写命中纪元判定。用户手动设 XDT_USER_DATA_DIR(上面的分支不
-      // 进入)或旧 checkout 启动都不带该信号 → 观察模式,防旧代码对同一显式
-      // 路径以默认身份打开造成双身份互写(#912 review P1)。
+      // å¯ä¿¡çºªå…ƒä¿¡å·:ä»…å½“ç›®å½•ç”±æœ¬è„šæœ¬æŒ‰ -dev2 çºªå…ƒæ´¾ç”Ÿæ—¶æºå¸¦,ä¸»è¿›ç¨‹æ®æ­¤å…è®¸
+      // æ˜¾å¼ env è¦†å†™å‘½ä¸­çºªå…ƒåˆ¤å®šã€‚ç”¨æˆ·æ‰‹åŠ¨è®¾ XDT_USER_DATA_DIR(ä¸Šé¢çš„åˆ†æ”¯ä¸
+      // è¿›å…¥)æˆ–æ—§ checkout å¯åŠ¨éƒ½ä¸å¸¦è¯¥ä¿¡å· â†’ è§‚å¯Ÿæ¨¡å¼,é˜²æ—§ä»£ç å¯¹åŒä¸€æ˜¾å¼
+      // è·¯å¾„ä»¥é»˜è®¤èº«ä»½æ‰“å¼€é€ æˆåŒèº«ä»½äº’å†™(#912 review P1)ã€‚
       process.env.XDT_USER_DATA_DIR_EPOCH = '1';
       userDataDerivedByRestart = true;
     }
   }
-  // --isolated-auth: 沙箱凭证隔离 —— 启动时清掉本沙箱旧 auth(共享硬链与独立孤岛
-  // 都处理),再显式允许沙箱自己的 OAuth 写入；正式实例与本机 CLI 凭证不受影响。
-  // 隔离沙箱里测登录流程时必用:共享硬链下沙箱登录会改写共用凭证文件,把正式版
-  // 一起退登(2026-08-13 实测)。实现:置 XDT_ISOLATED_AUTH=1,经 devEnvPrefix
-  // 白名单透传,maker-host auth-adapters 消费(仅非 packaged 生效)。
+  // --isolated-auth: æ²™ç®±å‡­è¯éš”ç¦» â€”â€” å¯åŠ¨æ—¶æ¸…æŽ‰æœ¬æ²™ç®±æ—§ auth(å…±äº«ç¡¬é“¾ä¸Žç‹¬ç«‹å­¤å²›
+  // éƒ½å¤„ç†),å†æ˜¾å¼å…è®¸æ²™ç®±è‡ªå·±çš„ OAuth å†™å…¥ï¼›æ­£å¼å®žä¾‹ä¸Žæœ¬æœº CLI å‡­è¯ä¸å—å½±å“ã€‚
+  // éš”ç¦»æ²™ç®±é‡Œæµ‹ç™»å½•æµç¨‹æ—¶å¿…ç”¨:å…±äº«ç¡¬é“¾ä¸‹æ²™ç®±ç™»å½•ä¼šæ”¹å†™å…±ç”¨å‡­è¯æ–‡ä»¶,æŠŠæ­£å¼ç‰ˆ
+  // ä¸€èµ·é€€ç™»(2026-08-13 å®žæµ‹)ã€‚å®žçŽ°:ç½® XDT_ISOLATED_AUTH=1,ç» devEnvPrefix
+  // ç™½åå•é€ä¼ ,maker-host auth-adapters æ¶ˆè´¹(ä»…éž packaged ç”Ÿæ•ˆ)ã€‚
   if (startupConfig && argv.includes('--isolated-auth')) {
     if (!isolatedArg) {
       exitWithFailure(
         'INVALID_ISOLATED_NAME',
         '--isolated-auth requires --isolated: shared userData must not isolate credentials alone',
-        ['==> --isolated-auth requires --isolated: 共享 userData 的实例不该单独隔离凭证'],
+        ['==> --isolated-auth requires --isolated: å…±äº« userData çš„å®žä¾‹ä¸è¯¥å•ç‹¬éš”ç¦»å‡­è¯'],
       );
     }
     if (!isTrustedIsolatedAuthUserDataDir({
@@ -1457,12 +1457,12 @@ async function main() {
     );
   }
 
-  // userData 冲突门:目标 userData 已被其他 checkout 的 dev 实例占用时中止。
-  // 杀掉别人(旧全灭行为)会顶掉用户并行调试中的沙箱;共用同一份 userData 并行
-  // 又会撞 SQLite / 登录态。两难之下唯一安全解是停下来让用户决定:换一个
-  // --isolated 名字,或用户自己停掉那个实例。preserve-running 不进此门 ——
-  // 它的语义就是共享 userData 的被动预览。检测是尽力而为:靠 helper 进程命令行
-  // 上的 --user-data-dir,对方实例刚启动还没起 helper 时可能漏检。
+  // userData å†²çªé—¨:ç›®æ ‡ userData å·²è¢«å…¶ä»– checkout çš„ dev å®žä¾‹å ç”¨æ—¶ä¸­æ­¢ã€‚
+  // æ€æŽ‰åˆ«äºº(æ—§å…¨ç­è¡Œä¸º)ä¼šé¡¶æŽ‰ç”¨æˆ·å¹¶è¡Œè°ƒè¯•ä¸­çš„æ²™ç®±;å…±ç”¨åŒä¸€ä»½ userData å¹¶è¡Œ
+  // åˆä¼šæ’ž SQLite / ç™»å½•æ€ã€‚ä¸¤éš¾ä¹‹ä¸‹å”¯ä¸€å®‰å…¨è§£æ˜¯åœä¸‹æ¥è®©ç”¨æˆ·å†³å®š:æ¢ä¸€ä¸ª
+  // --isolated åå­—,æˆ–ç”¨æˆ·è‡ªå·±åœæŽ‰é‚£ä¸ªå®žä¾‹ã€‚preserve-running ä¸è¿›æ­¤é—¨ â€”â€”
+  // å®ƒçš„è¯­ä¹‰å°±æ˜¯å…±äº« userData çš„è¢«åŠ¨é¢„è§ˆã€‚æ£€æµ‹æ˜¯å°½åŠ›è€Œä¸º:é  helper è¿›ç¨‹å‘½ä»¤è¡Œ
+  // ä¸Šçš„ --user-data-dir,å¯¹æ–¹å®žä¾‹åˆšå¯åŠ¨è¿˜æ²¡èµ· helper æ—¶å¯èƒ½æ¼æ£€ã€‚
   const targetUserDataDir = resolveRestartTargetUserDataDir({
     envUserDataDir: process.env.XDT_USER_DATA_DIR,
     isolatedArg,
@@ -1522,7 +1522,7 @@ async function main() {
   }
 
   const allTargets = listDesktopDevProcesses();
-  // kill 作用域 = 当前 checkout。其他 worktree / 命名沙箱的实例一律保留。
+  // kill ä½œç”¨åŸŸ = å½“å‰ checkoutã€‚å…¶ä»– worktree / å‘½åæ²™ç®±çš„å®žä¾‹ä¸€å¾‹ä¿ç•™ã€‚
   const ownScope = partitionDesktopDevProcesses(allTargets, rootDir, checkoutPaths);
   const targets = replaceRunningRoot
     ? allTargets.filter((proc) => commandContainsPath(proc.command, replaceRunningRoot))
@@ -1591,8 +1591,8 @@ async function main() {
       killProcess(target.pid);
     }
 
-    // 等待/强杀同样限定在本 checkout —— 不带过滤器会把其他 checkout 仍在跑的
-    // 实例当成"顽固进程"逐个 SIGKILL 掉。
+    // ç­‰å¾…/å¼ºæ€åŒæ ·é™å®šåœ¨æœ¬ checkout â€”â€” ä¸å¸¦è¿‡æ»¤å™¨ä¼šæŠŠå…¶ä»– checkout ä»åœ¨è·‘çš„
+    // å®žä¾‹å½“æˆ"é¡½å›ºè¿›ç¨‹"é€ä¸ª SIGKILL æŽ‰ã€‚
     const matchesOwnRoot = belongsToThisCheckout;
     const remainingAfterTerm = await waitForDesktopDevProcessesToExit(gracefulTimeoutMs, matchesOwnRoot);
     if (remainingAfterTerm.length > 0) {
@@ -1635,8 +1635,8 @@ async function main() {
     });
   }
   const terminalLogPath = startDesktopDev(mode);
-  // 所有非 ready 的结论（启动失败、超时、ready 后进程退出导致的 WHOAMI_MISMATCH）
-  // 都先打印终端日志末尾，并在 verdict 里带上 log=。
+  // æ‰€æœ‰éž ready çš„ç»“è®ºï¼ˆå¯åŠ¨å¤±è´¥ã€è¶…æ—¶ã€ready åŽè¿›ç¨‹é€€å‡ºå¯¼è‡´çš„ WHOAMI_MISMATCHï¼‰
+  // éƒ½å…ˆæ‰“å°ç»ˆç«¯æ—¥å¿—æœ«å°¾ï¼Œå¹¶åœ¨ verdict é‡Œå¸¦ä¸Š log=ã€‚
   const printFailedVerdict = (verdict) => {
     const logTail = terminalLogPath ? readDesktopDevLogTail(terminalLogPath) : [];
     if (logTail.length > 0) {
@@ -1676,3 +1676,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exit(1);
   });
 }
+

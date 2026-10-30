@@ -1,20 +1,20 @@
-import os from "node:os";
+﻿import os from "node:os";
 import path from "node:path";
 
-/** Desktop dev 支持的区域身份。 */
+/** Desktop dev æ”¯æŒçš„åŒºåŸŸèº«ä»½ã€‚ */
 export const DESKTOP_DEV_REGIONS = Object.freeze(["cn", "global", "dev"]);
 
 /**
- * 与 packages/maker-shared/src/brandIdentity.ts 的 userDataDirNameByRegion 镜像。
- * .mjs 启动器不能直接 import TS；同步关系由 brand-identity-sync.test.mjs 锁住。
+ * ä¸Ž packages/maker-shared/src/brandIdentity.ts çš„ userDataDirNameByRegion é•œåƒã€‚
+ * .mjs å¯åŠ¨å™¨ä¸èƒ½ç›´æŽ¥ import TSï¼›åŒæ­¥å…³ç³»ç”± brand-identity-sync.test.mjs é”ä½ã€‚
  */
 export const DESKTOP_USER_DATA_DIR_NAME_BY_REGION = Object.freeze({
-  cn: "Cindy",
-  global: "CindyGlobal",
-  dev: "CindyDev",
+  cn: "Echo",
+  global: "EchoGlobal",
+  dev: "EchoDev",
 });
 
-/** 共享 Desktop profile 的区域目录名；省略区域时遵循产品规则默认 Global。 */
+/** å…±äº« Desktop profile çš„åŒºåŸŸç›®å½•åï¼›çœç•¥åŒºåŸŸæ—¶éµå¾ªäº§å“è§„åˆ™é»˜è®¤ Globalã€‚ */
 export function desktopUserDataDirNameForRegion(region = "global") {
   if (!DESKTOP_DEV_REGIONS.includes(region)) {
     throw new Error(
@@ -24,7 +24,7 @@ export function desktopUserDataDirNameForRegion(region = "global") {
   return DESKTOP_USER_DATA_DIR_NAME_BY_REGION[region];
 }
 
-/** 计算与 Electron app.getPath('userData') 对齐的区域 profile 路径。 */
+/** è®¡ç®—ä¸Ž Electron app.getPath('userData') å¯¹é½çš„åŒºåŸŸ profile è·¯å¾„ã€‚ */
 export function desktopUserDataDirForRegion(
   region = "global",
   platform = process.platform,
@@ -52,8 +52,8 @@ export function desktopUserDataDirForRegion(
 }
 
 /**
- * 解析 desktop dev 区域。命令行显式值优先，保留 CINDY_AUTH_REGION 作为
- * CI / 老脚本兼容入口；无配置时默认 Global。
+ * è§£æž desktop dev åŒºåŸŸã€‚å‘½ä»¤è¡Œæ˜¾å¼å€¼ä¼˜å…ˆï¼Œä¿ç•™ CINDY_AUTH_REGION ä½œä¸º
+ * CI / è€è„šæœ¬å…¼å®¹å…¥å£ï¼›æ— é…ç½®æ—¶é»˜è®¤ Globalã€‚
  */
 export function resolveDesktopDevRegion(argv, env = process.env) {
   let cliRegion;
@@ -90,7 +90,7 @@ export function resolveDesktopDevRegion(argv, env = process.env) {
   return region;
 }
 
-/** 从传给 Electron Forge 的 argv 中移除已由 dev wrapper 消费的区域参数。 */
+/** ä»Žä¼ ç»™ Electron Forge çš„ argv ä¸­ç§»é™¤å·²ç”± dev wrapper æ¶ˆè´¹çš„åŒºåŸŸå‚æ•°ã€‚ */
 export function stripDesktopDevRegionArgs(argv) {
   const result = [];
   for (let index = 0; index < argv.length; index += 1) {
@@ -106,9 +106,9 @@ export function stripDesktopDevRegionArgs(argv) {
 }
 
 /**
- * 计算 desktop dev 启动配置。remote dev 始终读取同区域仓内清单，
- * 不把父进程继承的端点文件当成用户覆盖；local 模式保留本地服务文件。
- * --endpoints-cdn / XDT_ENDPOINTS_CDN=1 时不注入默认文件，让主进程走区域化 CDN。
+ * è®¡ç®— desktop dev å¯åŠ¨é…ç½®ã€‚remote dev å§‹ç»ˆè¯»å–åŒåŒºåŸŸä»“å†…æ¸…å•ï¼Œ
+ * ä¸æŠŠçˆ¶è¿›ç¨‹ç»§æ‰¿çš„ç«¯ç‚¹æ–‡ä»¶å½“æˆç”¨æˆ·è¦†ç›–ï¼›local æ¨¡å¼ä¿ç•™æœ¬åœ°æœåŠ¡æ–‡ä»¶ã€‚
+ * --endpoints-cdn / XDT_ENDPOINTS_CDN=1 æ—¶ä¸æ³¨å…¥é»˜è®¤æ–‡ä»¶ï¼Œè®©ä¸»è¿›ç¨‹èµ°åŒºåŸŸåŒ– CDNã€‚
  */
 export function resolveDesktopDevStartupConfig({
   argv,
@@ -127,7 +127,7 @@ export function resolveDesktopDevStartupConfig({
   return { region, endpointsCdn, endpointManifestFile };
 }
 
-/** 把纯解析结果写入即将启动 desktop dev 的环境。 */
+/** æŠŠçº¯è§£æžç»“æžœå†™å…¥å³å°†å¯åŠ¨ desktop dev çš„çŽ¯å¢ƒã€‚ */
 export function applyDesktopDevStartupConfig(options) {
   const config = resolveDesktopDevStartupConfig(options);
   const env = options.env ?? process.env;
@@ -141,3 +141,4 @@ export function applyDesktopDevStartupConfig(options) {
   }
   return config;
 }
+
